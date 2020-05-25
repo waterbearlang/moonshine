@@ -1,0 +1,23 @@
+# TODO for Moonshine
+
+## Extending the Moonshine Language
+
+- [ ] Parse literal sets
+- [ ] Parse literal vectors
+- [ ] Parse minimized dicts (key is name of variable)
+- [ ] Allow assignment only in functions for temp values
+- [ ] Allow definition of constants
+- [ ] Rest and spread? (not urgent)
+- [ ] Shortcuts for math expressions
+- [ ] Figure out what to do about async
+- [ ] Add details about performance?
+
+## Runtime
+
+- [ ] Map basic JavaScript to carry over
+- [ ] Vectors
+- [ ] Matrixes
+- [ ] Sets
+- [ ] Shapes
+
+##

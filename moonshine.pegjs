@@ -4,13 +4,13 @@
 // Accepts Namespaced, typed functions and constants
 
 Namespace
-  = name:Name _ "{" _ values:Functions _ "}" {return {name, type: 'namespace', values}};
+  = name:Name _ "{" _ values:Functions _ "}" {console.log('ns values: %s', JSON.stringify(values, null, 2)); return {name, type: 'namespace', values}};
   
 Functions
-  = ((Function _) / (Comment _))+ ;
+  = fns:((Function _) / (Comment _))+ { return fns.map(a => a[0]) }
 
 Name 
-  = name:[a-zA-Z]* { return name.join(""); };
+  = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") };
 
 Type
   = Name;
@@ -21,24 +21,35 @@ TypedName
 CommaSep
   = _ "," _;
 
-FunctionParameters
-  = "()"
-  / "(" _ TypedName _ ")"
-  / "(" _ TypedName CommaSep TypedName ")"
-  / "(" _ TypedName CommaSep TypedName CommaSep TypedName ")"
-  ;
+Parameters
+  = "(" _ ")" {return [] }
+  / "(" _ a:TypedName _ ")" { return [a] }
+  / "(" _ a:TypedName CommaSep b:TypedName ")" {return [a,b]}
+  / "(" _ a:TypedName CommaSep b:TypedName CommaSep c:TypedName ")" { return [a,b,c] }
   
 Arguments
- = "()"
- / "(" _ Argument _ ")"
- / "(" _ Argument CommaSep Argument _ ")"
- / "(" _ Argument CommaSep Argument CommaSep Argument _ ")";
+ = "(" _ ")" { return [] }
+ / "(" _ a:Argument _ ")" { return [a] }
+ / "(" _ a:Argument CommaSep b:Argument _ ")" { return [a,b] }
+ / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
  
 Argument
-  = Name
-  / Value;
+  = FunctionCall
+  / Value
+  / Name
 
 Value
+  = KeyedValue
+  / IndexedValue
+  / LiteralValue
+
+KeyedValue
+  = object:Name "." key:Name {return {type: "keyedValue", object, key} }
+
+IndexedValue
+  = array:Name "[" _ index:Value _ "]" { return {type: "indexedValue", array, index} }
+
+LiteralValue
   = Number
   / Boolean
   / String
@@ -63,24 +74,24 @@ String
   / "'" .* "'" { return {type: 'string', value: text()} }
 
 ValueList
-  = (Value CommaSep)* Value;
+  = vals:(Value CommaSep)* val:Value {let l = vals.map(a => a[0]); l.push(val); return l;}
 
 Array
-  = "[" ValueList "]";
+  = "[" list:ValueList "]" { return {type: 'array', value: list} }
   
-Dict = "{" KeyValueList "}";
+Dict = "{" list:KeyValueList "}" { return {type: 'dict', value: list} }
 
 KeyValue
-  = Name _ ":" _ Value;
+  = key:Name _ ":" _ value:Value { return {key, value} } 
   
 KeyValueList
-  = (KeyValue CommaSep)* KeyValue;
+  = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l};
   
 FunctionSignature
-  = name:TypedName _ "=" _ params:FunctionParameters {return {name, params}}
+  = name:TypedName _ "=" _ params:Parameters {return {name, params}}
   
 FunctionBody
-  = "{" _ exprs:Expression+ _ "}" {return "{\n" + exprs.join('\n') + "\n}"};
+  = "{" _ exprs:Expression+ _ "}" {return exprs };
   
 Function
  = sig: FunctionSignature _ "=>" _ body:FunctionBody { return {type: 'function', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}}
@@ -90,11 +101,11 @@ Expression
   / FunctionCall;
 
 Comment
-  = "//" [^\n]*  { return {type: 'comment', value: text()}}
-  / "/*" .* "*/" { return {type: 'comment', value: text()}}
+  = "//" _ value:([^\n]*)  { return {type: 'comment', value: value.join('')}}
+  / "/*" _ value:(.*) _ "*/" { return {type: 'comment', value: value.join('')}}
 
 FunctionCall
-  = namespace:Name "." name:Name args:Arguments ";" {return {type: 'functionCall', namespace, name, args}};
+  = namespace:Name "." name:Name args:Arguments {return {type: 'functionCall', namespace, name, args}};
   
 _ "whitespace"
   = [ \t\n\r]* {return undefined};
