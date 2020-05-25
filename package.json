@@ -1,0 +1,24 @@
+{
+  "name": "moonshine",
+  "version": "1.0.0",
+  "description": "Text version of Waterbear",
+  "main": "moonshine.js",
+  "scripts": {
+    "test": "pegjs moonshine.pegjs && node test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/waterbearlang/moonshine.git"
+  },
+  "keywords": [
+    "block-based",
+    "programming",
+    "language"
+  ],
+  "author": "Dethe Elza",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/waterbearlang/moonshine/issues"
+  },
+  "homepage": "https://github.com/waterbearlang/moonshine#readme"
+}

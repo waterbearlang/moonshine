@@ -1,0 +1,5 @@
+Vector{
+  fromXY:Vector = (x:Number, y:Number) => { 
+    Runtime.Vector(x,y); 
+  }
+}
