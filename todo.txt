@@ -1,5 +1,7 @@
 # TODO for Moonshine
 
+Docs for peg.js: https://pegjs.org/documentation#installation-node-js
+
 ## Extending the Moonshine Language
 
 - [ ] Parse literal sets
@@ -10,7 +12,7 @@
 - [ ] Rest and spread? (not urgent)
 - [ ] Shortcuts for math expressions
 - [ ] Figure out what to do about async
-- [ ] Add details about performance?
+- [ ] Add details about performance? Later (i.e., big-O of functions)
 
 ## Runtime
 
@@ -18,6 +20,16 @@
 - [ ] Vectors
 - [ ] Matrixes
 - [ ] Sets
-- [ ] Shapes
+- [ ] Shapes (declarative drawing)
+- [ ] Everything currently in Waterbear and issues
 
-##
+## Testing
+
+- [ ] Need to write more examples. Lots more
+- [ ] Get all the P5 demos working, for instance
+
+## Editing
+
+- [ ] Once the script is parsed, the parse tree is the source of all truth, as an immutable structure.
+- [ ] Blocks are built from parse tree
+- [ ] "Text" view is really just different custom elements being driving by the parse tree
