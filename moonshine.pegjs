@@ -1,23 +1,39 @@
 //  Moonshine Grammar
 // ==========================
 //
-// Accepts Namespaced, typed functions and constants
+// Accepts Namespaced, typed Steps and constants
 
 Namespace
-  = name:Name _ "{" _ values:Functions _ "}" {console.log('ns values: %s', JSON.stringify(values, null, 2)); return {name, type: 'namespace', values}};
-  
-Functions
-  = fns:((Function _) / (Comment _))+ { return fns.map(a => a[0]) }
+  = name:Name _ "{" _ values:Blocks _ "}" {console.log('ns values: %s', JSON.stringify(values, null, 2)); return {name, type: 'namespace', values}};
+
+Blocks
+  = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) }
 
 Name 
   = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") };
 
+Block
+  = Step / Context / Trigger / Value;
+
 Type
   = Name;
 
+NamedReturnType
+  = name:Name ":" type:Type "\""returnName:Name"\"" {return {name, type, returnName}};
+
+NamedReturnUntyped
+  = name:Name "\""returnName:Name"\"" {return {name, returnName}};
+  
 TypedName
   = name:Name ":" type:Type {return {name,type}};
-  
+
+StepName
+  = NamedReturnType / TypedName;
+
+/* Contexts have dynamic types, so their types are not specified in the signature */
+ContextName
+  = NamedReturnUntypes / Name;
+
 CommaSep
   = _ "," _;
 
@@ -34,7 +50,7 @@ Arguments
  / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
  
 Argument
-  = FunctionCall
+  = StepCall
   / Value
   / Name
 
@@ -51,9 +67,9 @@ IndexedValue
 
 LiteralValue
   = Number
-  / Boolean
-  / String
-  / Array
+  / Truth
+  / Text
+  / List
   / Dict;
   
 Number
@@ -66,17 +82,17 @@ Float
 Integer
   = [0-9]+ {return {type: 'integer', value: parseInt(text(), 10)}};
   
-Boolean
-  = "true" / "false" {return {type: 'boolean', value: text()==='true'}}
+Truth
+  = "true" / "false" {return {type: 'truth', value: text()==='true'}}
   
-String
-  = '"' .* '"' { return {type: 'string', value: text()} }
-  / "'" .* "'" { return {type: 'string', value: text()} }
+Text
+  = '"' .* '"' { return {type: 'text', value: text()} }
+  / "'" .* "'" { return {type: 'text', value: text()} }
 
 ValueList
   = vals:(Value CommaSep)* val:Value {let l = vals.map(a => a[0]); l.push(val); return l;}
 
-Array
+List
   = "[" list:ValueList "]" { return {type: 'array', value: list} }
   
 Dict = "{" list:KeyValueList "}" { return {type: 'dict', value: list} }
@@ -87,25 +103,31 @@ KeyValue
 KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l};
   
-FunctionSignature
-  = name:TypedName _ "=" _ params:Parameters {return {name, params}}
-  
-FunctionBody
+StepSignature
+  = name:StepName _ params:Parameters {return {name, params}};
+ 
+StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs };
   
-Function
- = sig: FunctionSignature _ "=>" _ body:FunctionBody { return {type: 'function', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}}
+Step
+ = sig: StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.returnName.name || sig.name.name, params: sig.params, body}}
+
+ContextSignature
+   = name:ContextName _ params:Parameters {return name, params}};
+
+Context
+  = sig: StepSignature _ body:StepBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.returnName.name || sig.name.name, params.sig.params, body}}
  
 Expression
   = Comment
-  / FunctionCall;
+  / StepCall;
 
 Comment
   = "//" _ value:([^\n]*)  { return {type: 'comment', value: value.join('')}}
   / "/*" _ value:(.*) _ "*/" { return {type: 'comment', value: value.join('')}}
 
-FunctionCall
-  = namespace:Name "." name:Name args:Arguments {return {type: 'functionCall', namespace, name, args}};
+StepCall
+  = namespace:Name "." name:Name args:Arguments {return {type: 'StepCall', namespace, name, args}};
   
 _ "whitespace"
   = [ \t\n\r]* {return undefined};

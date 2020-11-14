@@ -5,9 +5,6 @@ Moonshine is a functional language, mostly immutable, with any mutable or side-e
 
 Some of the building blocks, for now:
 
-* Mori, for immutable data structures and functional helpers http://swannodette.github.io/mori/ and https://github.com/swannodette/mori
-* Ohm, for parsing https://github.com/dethe/ohm and https://www.pubnub.com/blog/2016-08-30-javascript-parser-ohm-makes-creating-a-programming-language-easy/
-* Underscore.string https://github.com/epeli/underscore.string#api
 * Math (including matrices, vectors): http://mathjs.org/docs/reference/functions.html
 * [Music Lib]
 * [Physics Lib]

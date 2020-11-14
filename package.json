@@ -20,5 +20,8 @@
   "bugs": {
     "url": "https://github.com/waterbearlang/moonshine/issues"
   },
-  "homepage": "https://github.com/waterbearlang/moonshine#readme"
+  "homepage": "https://github.com/waterbearlang/moonshine#readme",
+  "dependencies": {
+    "pegjs": "^0.10.0"
+  }
 }
