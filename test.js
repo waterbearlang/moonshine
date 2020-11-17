@@ -15,3 +15,5 @@ try{
   console.error('\tLocation end: %o', e.location.end);
   console.error('\tMessage: %s', e.message);
 }
+
+// FIXME: Add real tests rather than eyeballing the JSON results

@@ -4,7 +4,7 @@
 // Accepts Namespaced, typed Steps and constants
 
 Namespace
-  = name:Name _ "{" _ values:Blocks _ "}" {console.log('ns values: %s', JSON.stringify(values, null, 2)); return {name, type: 'namespace', values}};
+  = name:Name _ "{" _ values:Blocks _ "}" {return {name, type: 'namespace', values}};
 
 Blocks
   = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) };

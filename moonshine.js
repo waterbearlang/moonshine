@@ -145,7 +145,7 @@ function peg$parse(input, options) {
       peg$c1 = peg$literalExpectation("{", false),
       peg$c2 = "}",
       peg$c3 = peg$literalExpectation("}", false),
-      peg$c4 = function(name, values) {console.log('ns values: %s', JSON.stringify(values, null, 2)); return {name, type: 'namespace', values}},
+      peg$c4 = function(name, values) {return {name, type: 'namespace', values}},
       peg$c5 = function(fns) { return fns.map(a => a[0]) },
       peg$c6 = /^[a-zA-Z]/,
       peg$c7 = peg$classExpectation([["a", "z"], ["A", "Z"]], false, false),
