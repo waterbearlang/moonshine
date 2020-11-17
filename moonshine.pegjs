@@ -19,20 +19,20 @@ Type
   = Name;
 
 NamedReturnType
-  = name:Name ":" type:Type "\""returnName:Name"\"" {return {name, type, returnName}};
+  = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}};
 
 NamedReturnUntyped
-  = name:Name "\""returnName:Name"\"" {return {name, returnName}};
+  = name:Name _ '"' returnName:Name '"' {return {name, type:null, returnName}};
   
 TypedName
-  = name:Name ":" type:Type {return {name,type}};
+  = name:Name _ ":" _ type:Type {return {name,type, returnName:name}};
 
 StepName
   = NamedReturnType / TypedName;
 
 /* Contexts have dynamic types, so their types are not specified in the signature */
 ContextName
-  = NamedReturnUntypes / Name;
+  = NamedReturnUntyped / Name;
 
 CommaSep
   = _ "," _;
@@ -51,21 +51,21 @@ Arguments
  
 Argument
   = StepCall
-  / Value
+  / ValueArg
   / Name
 
-Value
-  = KeyedValue
-  / IndexedValue
-  / LiteralValue
+ValueArg
+  = KeyedValueArg
+  / IndexedValueArg
+  / LiteralValueArg
 
-KeyedValue
+KeyedValueArg
   = object:Name "." key:Name {return {type: "keyedValue", object, key} }
 
-IndexedValue
+IndexedValueArg
   = array:Name "[" _ index:Value _ "]" { return {type: "indexedValue", array, index} }
 
-LiteralValue
+LiteralValueArg
   = Number
   / Truth
   / Text
@@ -108,15 +108,27 @@ StepSignature
  
 StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs };
+
+ValueBody
+  = "<=" _ expr:Expression  _ ";" { console.log('ValueBody'); return expr };
   
 Step
- = sig: StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.returnName.name || sig.name.name, params: sig.params, body}}
+ = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}};
 
 ContextSignature
-   = name:ContextName _ params:Parameters {return name, params}};
+   = name:ContextName _ params:Parameters {return {name, params}};
 
 Context
-  = sig: StepSignature _ body:StepBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.returnName.name || sig.name.name, params.sig.params, body}}
+  = sig:ContextSignature _ body:StepBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}};
+
+TriggerSignature
+  = name: Name _ params:Parameters {return {name, params}};
+
+Trigger
+  = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}};
+
+Value
+  = sig:TypedName _ body:ValueBody {return {type: 'Value', name: sig.name.name, returnType: sig.name.type, body}}; 
  
 Expression
   = Comment

@@ -17,4 +17,18 @@ Vector{
   add:Vector(a:Vector, b:Vector){
     Runtime.Vector(Math.add(a.x, b.x), Math.add(a.y, b.y))
   }
+
+  // Trigger
+  whenMagExceedsStage(a:Vector){
+    WhatsTheVector.victor(a)
+  }
+
+  // Context
+  map "returnlist" (a:Vector){
+    Map.VectorList(a)
+  }
+
+  // Value
+  unit:Vector <= Vector.unitVector();
+
 }
