@@ -7,7 +7,7 @@ Namespace
   = name:Name _ "{" _ values:Blocks _ "}" {console.log('ns values: %s', JSON.stringify(values, null, 2)); return {name, type: 'namespace', values}};
 
 Blocks
-  = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) }
+  = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) };
 
 Name 
   = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") };
@@ -15,8 +15,16 @@ Name
 Block
   = Step / Context / Trigger / Value;
 
+TypedList
+  = name:Name "[]" {return name + "List"};
+
+ConstrainedTypedList
+  = name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
+
 Type
-  = Name;
+  = ConstrainedTypedList
+  / TypedList
+  / Name;
 
 NamedReturnType
   = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}};
@@ -55,17 +63,17 @@ Argument
   / Name
 
 ValueArg
-  = KeyedValueArg
-  / IndexedValueArg
-  / LiteralValueArg
+  = KeyedValue
+  / IndexedValue
+  / LiteralValue
 
-KeyedValueArg
+KeyedValue
   = object:Name "." key:Name {return {type: "keyedValue", object, key} }
 
-IndexedValueArg
+IndexedValue
   = array:Name "[" _ index:Value _ "]" { return {type: "indexedValue", array, index} }
 
-LiteralValueArg
+LiteralValue
   = Number
   / Truth
   / Text
@@ -90,7 +98,7 @@ Text
   / "'" .* "'" { return {type: 'text', value: text()} }
 
 ValueList
-  = vals:(Value CommaSep)* val:Value {let l = vals.map(a => a[0]); l.push(val); return l;}
+  = vals:(Argument CommaSep)* val:Argument {let l = vals.map(a => a[0]); l.push(val); return l;}
 
 List
   = "[" list:ValueList "]" { return {type: 'array', value: list} }
@@ -110,7 +118,7 @@ StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs };
 
 ValueBody
-  = "<=" _ expr:Expression  _ ";" { console.log('ValueBody'); return expr };
+  = "<=" _ expr:Expression  _ ";" { return expr };
   
 Step
  = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}};
@@ -132,7 +140,8 @@ Value
  
 Expression
   = Comment
-  / StepCall;
+  / StepCall
+  / Argument;
 
 Comment
   = "//" _ value:([^\n]*)  { return {type: 'comment', value: value.join('')}}

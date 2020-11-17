@@ -31,4 +31,9 @@ Vector{
   // Value
   unit:Vector <= Vector.unitVector();
 
+  // Step returns a constrained list
+  asArray:Number[2](vector:Vector){
+    [vector.x, vector.y]
+  }
+
 }
