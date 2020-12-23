@@ -19,13 +19,22 @@ Vector{
   }
 
   // Trigger
-  whenMagExceedsStage(a:Vector){
+  trigger whenMagExceedsStage(a:Vector){
     WhatsTheVector.victor(a)
   }
 
   // Context
-  map "returnlist" (a:Vector){
-    Map.VectorList(a)
+  context forEach (a:String[]){
+     String.fold(a);
+  }
+
+  // Context with locals
+  context withVector(v:Vector){
+    locals{
+      index:Number <= local.iteration
+      value:Number <= v[local.iteration]
+    }
+    // do something with expressions
   }
 
   // Value

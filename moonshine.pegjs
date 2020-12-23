@@ -13,7 +13,7 @@ Name
   = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") };
 
 Block
-  = Step / Context / Trigger / Value;
+  = Trigger / Context / Step / Value;
 
 TypedList
   = name:Name "[]" {return name + "List"};
@@ -37,10 +37,6 @@ TypedName
 
 StepName
   = NamedReturnType / TypedName;
-
-/* Contexts have dynamic types, so their types are not specified in the signature */
-ContextName
-  = NamedReturnUntyped / Name;
 
 CommaSep
   = _ "," _;
@@ -117,6 +113,9 @@ StepSignature
 StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs };
 
+LocalsBody
+  = "{" _ "locals" _ "{" locals:Value+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}};
+
 ValueBody
   = "<=" _ expr:Expression  _ ";" { return expr };
   
@@ -124,13 +123,17 @@ Step
  = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}};
 
 ContextSignature
-   = name:ContextName _ params:Parameters {return {name, params}};
+   = "context" name:Name _ params:Parameters {return {name, params}};
+
+ContextBody
+   = LocalsBody
+   / StepBody;
 
 Context
-  = sig:ContextSignature _ body:StepBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}};
+  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}};
 
 TriggerSignature
-  = name: Name _ params:Parameters {return {name, params}};
+  = "trigger" name:Name _ params:Parameters {return {name, params}};
 
 Trigger
   = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}};
