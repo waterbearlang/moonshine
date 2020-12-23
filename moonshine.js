@@ -213,10 +213,10 @@ function peg$parse(input, options) {
       peg$c69 = function(sig, body) { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}},
       peg$c70 = "context",
       peg$c71 = peg$literalExpectation("context", false),
-      peg$c72 = function(sig, body) {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}},
+      peg$c72 = function(sig, body) {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}},
       peg$c73 = "trigger",
       peg$c74 = peg$literalExpectation("trigger", false),
-      peg$c75 = function(sig, body) {return {type: 'Trigger', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}},
+      peg$c75 = function(sig, body) {return {type: 'Trigger', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}},
       peg$c76 = function(sig, body) {return {type: 'Value', name: sig.name.name, returnType: sig.name.type, body}},
       peg$c77 = "//",
       peg$c78 = peg$literalExpectation("//", false),
@@ -1382,6 +1382,17 @@ function peg$parse(input, options) {
     return s0;
   }
 
+  function peg$parseNamedValue() {
+    var s0;
+
+    s0 = peg$parseKeyedValue();
+    if (s0 === peg$FAILED) {
+      s0 = peg$parseName();
+    }
+
+    return s0;
+  }
+
   function peg$parseKeyedValue() {
     var s0, s1, s2, s3;
 
@@ -1396,7 +1407,7 @@ function peg$parse(input, options) {
         if (peg$silentFails === 0) { peg$fail(peg$c40); }
       }
       if (s2 !== peg$FAILED) {
-        s3 = peg$parseName();
+        s3 = peg$parseNamedValue();
         if (s3 !== peg$FAILED) {
           peg$savedPos = s0;
           s1 = peg$c41(s1, s3);

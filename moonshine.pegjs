@@ -63,8 +63,12 @@ ValueArg
   / IndexedValue
   / LiteralValue
 
+NamedValue
+  = KeyedValue
+  / Name
+
 KeyedValue
-  = object:Name "." key:Name {return {type: "KeyedValue", object, key} }
+  = object:Name "." key:NamedValue {return {type: "KeyedValue", object, key} }
 
 IndexedValue
   = array:Name "[" _ index:ValueArg _ "]" { return {type: "IndexedValue", array, index} }
@@ -130,13 +134,13 @@ ContextBody
    / StepBody
 
 Context
-  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
+  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
   = "trigger" __ name:Name _ params:Parameters {return {name, params}}
 
 Trigger
-  = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}}
+  = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 Value
   = sig:TypedName _ body:ValueBody _ {return {type: 'Value', name: sig.name.name, returnType: sig.name.type, body}}

@@ -17,6 +17,7 @@ try{
   console.assert(values[2].type === 'Step', 'expected value to be a Step, was %s', values[2].type);
   console.assert(values[3].type === 'Trigger', 'expected value to be a Trigger, was %s', values[3].type);
   console.assert(values[4].type === 'Context', 'expected value to be a Context, was %s', values[4].type);
+  console.assert(values[4].name === "forEach", 'expected value name to be "forEach", got "%s"', values[4].name);
   console.assert(values[5].type === 'Context', 'expected value to be a Context, was %s', values[5].type);
   console.assert(values[6].type === 'Value', 'expected value to be a Value, was %s', values[6].type);
   console.assert(values[7].type === 'Step', 'expected value to be a Step, was %s', values[7].type);
@@ -31,4 +32,3 @@ try{
   console.error('\tMessage: %s', e.message);
 }
 
-// FIXME: Add real tests rather than eyeballing the JSON results
