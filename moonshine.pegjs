@@ -4,19 +4,19 @@
 // Accepts Namespaced, typed Steps and constants
 
 Namespace
-  = name:Name _ "{" _ values:Blocks _ "}" {return {name, type: 'namespace', values}};
+  = name:Name _ "{" _ values:Blocks _ "}" _ {return {name, type: 'Namespace', values}}
 
 Blocks
-  = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) };
+  = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) }
 
 Name 
-  = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") };
+  = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") }
 
 Block
-  = Trigger / Context / Step / Value;
+  = Trigger / Context / Step / Value
 
 TypedList
-  = name:Name "[]" {return name + "List"};
+  = name:Name "[]" {return name + "List"}
 
 ConstrainedTypedList
   = name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
@@ -24,22 +24,22 @@ ConstrainedTypedList
 Type
   = ConstrainedTypedList
   / TypedList
-  / Name;
+  / Name
 
 NamedReturnType
-  = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}};
+  = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}}
 
 NamedReturnUntyped
-  = name:Name _ '"' returnName:Name '"' {return {name, type:null, returnName}};
+  = name:Name _ '"' returnName:Name '"' {return {name, type:null, returnName}}
   
 TypedName
-  = name:Name _ ":" _ type:Type {return {name,type, returnName:name}};
+  = name:Name _ ":" _ type:Type {return {name,type, returnName:name}}
 
 StepName
-  = NamedReturnType / TypedName;
+  = NamedReturnType / TypedName
 
 CommaSep
-  = _ "," _;
+  = _ "," _
 
 Parameters
   = "(" _ ")" {return [] }
@@ -48,10 +48,10 @@ Parameters
   / "(" _ a:TypedName CommaSep b:TypedName CommaSep c:TypedName ")" { return [a,b,c] }
   
 Arguments
- = "(" _ ")" { return [] }
- / "(" _ a:Argument _ ")" { return [a] }
- / "(" _ a:Argument CommaSep b:Argument _ ")" { return [a,b] }
- / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
+  = "(" _ ")" { return [] }
+  / "(" _ a:Argument _ ")" { return [a] }
+  / "(" _ a:Argument CommaSep b:Argument _ ")" { return [a,b] }
+  / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
  
 Argument
   = StepCall
@@ -64,94 +64,104 @@ ValueArg
   / LiteralValue
 
 KeyedValue
-  = object:Name "." key:Name {return {type: "keyedValue", object, key} }
+  = object:Name "." key:Name {return {type: "KeyedValue", object, key} }
 
 IndexedValue
-  = array:Name "[" _ index:Value _ "]" { return {type: "indexedValue", array, index} }
+  = array:Name "[" _ index:ValueArg _ "]" { return {type: "IndexedValue", array, index} }
 
 LiteralValue
   = Number
   / Truth
   / Text
   / List
-  / Dict;
+  / Dict
   
 Number
   = Float
-  / Integer;
+  / Integer
   
 Float
-  = [0-9]* "." [0-9]+ {return {type: 'float', value: parseFloat(text())}};
+  = [0-9]* "." [0-9]+ {return {type: 'Float', value: parseFloat(text())}}
   
 Integer
-  = [0-9]+ {return {type: 'integer', value: parseInt(text(), 10)}};
+  = [0-9]+ {return {type: 'Integer', value: parseInt(text(), 10)}}
   
 Truth
-  = "true" / "false" {return {type: 'truth', value: text()==='true'}}
+  = "true" / "false" {return {type: 'Truth', value: text()==='true'}}
   
 Text
-  = '"' .* '"' { return {type: 'text', value: text()} }
-  / "'" .* "'" { return {type: 'text', value: text()} }
+  = '"' .* '"' { return {type: 'Text', value: text()} }
+  / "'" .* "'" { return {type: 'Text', value: text()} }
 
 ValueList
   = vals:(Argument CommaSep)* val:Argument {let l = vals.map(a => a[0]); l.push(val); return l;}
 
 List
-  = "[" list:ValueList "]" { return {type: 'array', value: list} }
+  = "[" list:ValueList "]" { return {type: 'List', value: list} }
   
-Dict = "{" list:KeyValueList "}" { return {type: 'dict', value: list} }
+Dict = "{" list:KeyValueList "}" { return {type: 'Dict', value: list} }
 
 KeyValue
-  = key:Name _ ":" _ value:Value { return {key, value} } 
+  = key:Name _ ":" _ value:Value { return {key, value} }
   
 KeyValueList
-  = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l};
+  = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
   
 StepSignature
-  = name:StepName _ params:Parameters {return {name, params}};
+  = name:StepName _ params:Parameters {return {name, params}}
  
 StepBody
-  = "{" _ exprs:Expression+ _ "}" {return exprs };
+  = "{" _ exprs:Expression+ _ "}" {return exprs }
 
 LocalsBody
-  = "{" _ "locals" _ "{" locals:Value+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}};
+  = "{" _ "locals" _ "{" _ locals:Value+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}}
 
 ValueBody
-  = "<=" _ expr:Expression  _ ";" { return expr };
+  = "<=" _ expr:Expression  { return expr }
   
 Step
- = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}};
+ = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
 ContextSignature
-   = "context" name:Name _ params:Parameters {return {name, params}};
+   = "context" __ name:Name _ params:Parameters {return {name, params}}
 
 ContextBody
    = LocalsBody
-   / StepBody;
+   / StepBody
 
 Context
-  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}};
+  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
-  = "trigger" name:Name _ params:Parameters {return {name, params}};
+  = "trigger" __ name:Name _ params:Parameters {return {name, params}}
 
 Trigger
-  = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}};
+  = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name.name, returnType: sig.name.type, params: sig.params, body}}
 
 Value
-  = sig:TypedName _ body:ValueBody {return {type: 'Value', name: sig.name.name, returnType: sig.name.type, body}}; 
+  = sig:TypedName _ body:ValueBody _ {return {type: 'Value', name: sig.name.name, returnType: sig.name.type, body}}
  
 Expression
   = Comment
   / StepCall
-  / Argument;
+  / Argument
 
 Comment
-  = "//" _ value:([^\n]*)  { return {type: 'comment', value: value.join('')}}
-  / "/*" _ value:(.*) _ "*/" { return {type: 'comment', value: value.join('')}}
+  = "//" _ value:([^\n]*) _ { return {type: 'Comment', value: value.join('')}}
+  / "/*" _ value:(.*) _ "*/" { return {type: 'Comment', value: value.join('')}}
 
 StepCall
-  = namespace:Name "." name:Name args:Arguments {return {type: 'StepCall', namespace, name, args}};
+  = namespace:Name "." name:Name args:Arguments _ {return {type: 'StepCall', namespace, name, args}}
   
 _ "whitespace"
-  = [ \t\n\r]* {return undefined};
+  = [ \t\n\r]* {return undefined}
+
+__ "mandatory whitespace"
+  = [ \t]+ {return undefined}
+
+WS "just space"
+  = [ \t]*
+
+NL "new line"
+  = WS [\r\n]+ {return undefined}
+

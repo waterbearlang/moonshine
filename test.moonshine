@@ -15,6 +15,7 @@ Vector{
 
   // Vector math
   add:Vector(a:Vector, b:Vector){
+    Runtime.prepVectors(a,b)
     Runtime.Vector(Math.add(a.x, b.x), Math.add(a.y, b.y))
   }
 
@@ -25,7 +26,7 @@ Vector{
 
   // Context
   context forEach (a:String[]){
-     String.fold(a);
+    String.fold(exprs)
   }
 
   // Context with locals
@@ -35,10 +36,11 @@ Vector{
       value:Number <= v[local.iteration]
     }
     // do something with expressions
+    Vector.withVector(exprs)
   }
 
   // Value
-  unit:Vector <= Vector.unitVector();
+  unit:Vector <= Vector.unitVector()
 
   // Step returns a constrained list
   asArray:Number[2](vector:Vector){
