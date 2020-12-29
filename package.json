@@ -4,7 +4,8 @@
   "description": "Text version of Waterbear",
   "main": "moonshine.js",
   "scripts": {
-    "test": "pegjs moonshine.pegjs && node test.js"
+    "buildmodule": "pegjs moonshine.pegjs && node modularize.js",
+    "test": "pegjs moonshine.pegjs && node modularize.js && node test.js"
   },
   "repository": {
     "type": "git",

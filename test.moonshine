@@ -20,9 +20,19 @@ Vector{
   }
 
   // Trigger
-  trigger whenMagExceedsStage(a:Vector){
+  trigger whenMagExceedsStage(){
     WhatsTheVector.victor(a)
   }
+
+  // Trigger with Locals
+  trigger eachFrame (){
+    locals{
+      frameCount:Integer <= runtime.frameCount;
+      elapsed:Float <= runtime.elapsed;
+    }
+    Control.eachFrame(expressions)
+  }
+
 
   // Context
   context forEach (a:String[]){
@@ -32,15 +42,15 @@ Vector{
   // Context with locals
   context withVector(v:Vector){
     locals{
-      index:Number <= local.iteration
-      value:Number <= v[local.iteration]
+      index:Number <= local.iteration;
+      value:Number <= v[local.iteration];
     }
     // do something with expressions
     Vector.withVector(exprs)
   }
 
   // Value
-  unit:Vector <= Vector.unitVector()
+  unit:Vector <= Vector.unitVector();
 
   // Step returns a constrained list
   asArray:Number[2](vector:Vector){

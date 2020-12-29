@@ -137,13 +137,13 @@ Context
   = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
-  = "trigger" __ name:Name _ params:Parameters {return {name, params}}
+  = "trigger" __ name:Name _ "(" _ ")" {return {name}}
 
 Trigger
-  = sig:TriggerSignature _ body:StepBody {return {type: 'Trigger', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
+  = sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
 
 Value
-  = sig:TypedName _ body:ValueBody _ {return {type: 'Value', name: sig.name.name, returnType: sig.name.type, body}}
+  = sig:TypedName _ body:ValueBody _ ";" _ {return {type: 'Value', name: sig.name, returnType: sig.type, value: body}}
  
 Expression
   = Comment
