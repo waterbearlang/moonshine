@@ -1,11 +1,11 @@
 {
   "name": "moonshine",
-  "version": "1.0.0",
+  "version": "0.2.0",
   "description": "Text version of Waterbear",
   "main": "moonshine.js",
   "scripts": {
-    "buildmodule": "pegjs moonshine.pegjs && node modularize.js",
-    "test": "pegjs moonshine.pegjs && node modularize.js && node test.js"
+    "buildmodule": "peggy moonshine.pegjs && node modularize.js",
+    "test": "peggy moonshine.pegjs && node modularize.js && node test.js"
   },
   "repository": {
     "type": "git",
@@ -23,6 +23,6 @@
   },
   "homepage": "https://github.com/waterbearlang/moonshine#readme",
   "dependencies": {
-    "pegjs": "^0.10.0"
+    "peggy": "^1.2.0"
   }
 }
