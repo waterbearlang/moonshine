@@ -15,9 +15,10 @@ try {
   console.error("\tLocation start: %o", e.location.start);
   console.error("\tLocation end: %o", e.location.end);
   console.error("\tMessage: %s", e.message);
+  process.exit();
 }
 
-console.assert(ast.name === "Vector", 'expected "Vector", got "%s"', ast.name);
+console.assert(ast.name === "Vector", `expected "Vector", got "${ast.name}"`);
 console.assert(
   ast.type === "Namespace",
   'expected "Namespace", got "%s"',

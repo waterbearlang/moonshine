@@ -3,181 +3,181 @@
 //
 // Accepts Namespaced, typed Steps and constants
 
-Unit "unit"
+Unit
   = name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
 
-Stage "stage"
+Comment
+  = "//" _ value:([^\n]+) _ { return {type: 'Comment', value: value.join('')}}
+  / "/*" _ value:(.+) _ "*/" _ { return {type: 'Comment', value: value.join('')}}
+
+Stage
   = "Stage" _ "[" _ values:Properties _ "]" _ {return {name, type: 'Stage', values}}
 
-Library "library"
+Library
   = "Library" _ "[" _ values:Properties _ "]" _ {return {name, type: 'Library', values}}
 
-Sprite "sprite"
+Sprite
   = name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
 
-Things "things" // later will include non-visible objects as well
+Things // later will include non-visible objects as well
   = ( Stage / Library / Sprite / Comment )+
 
 // Properties
 //   = (Block / Form / Sound / Costume / Spritesheet / Cycle / Comment )+
 
 // As further properties are defined, add them here
-Properties "properties"
+Properties
   = fns:(Block / Form / Comment )+ { return fns.map(a => a[0]) }
 
-Blocks "blocks"
-  = (Block / Comment)+
+// Blocks
+//   = (Block / Comment)+
 
-Name "name"
+Name
   = name:([a-zA-Z][ _a-zA-Z0-9]*) { name[1].unshift(name[0]); return name[1].join("") }
 
-Block "name"
+Block
   = Trigger / Context / Step / Value
 
-Form "form"
+Form
   = name:Name "[" _ values:KeyValueList _ "]" _ {return {name, type:'Form', values}}
 
-TypedList "typed list"
+TypedList
   = name:Name "[]" {return name + "List"}
 
-ConstrainedTypedList "constrained typed list"
+ConstrainedTypedList
   = name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
 
-Type "type"
+Type
   = ConstrainedTypedList
   / TypedList
   / Name
 
-NamedReturnType "named return type"
+NamedReturnType
   = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}}
 
-NamedReturnUntyped "named return untyped"
+NamedReturnUntyped
   = name:Name _ '"' returnName:Name '"' {return {name, type:null, returnName}}
 
-TypedName "typed name"
+TypedName
   = name:Name _ ":" _ type:Type {return {name,type, returnName:name}}
 
-StepName "step name"
+StepName
   = NamedReturnType / TypedName
 
-CommaSep "comma sep"
+CommaSep
   = _ "," _
 
-Parameters "parameters"
+Parameters
   = "(" _ ")" {return [] }
   / "(" _ a:TypedName _ ")" { return [a] }
   / "(" _ a:TypedName CommaSep b:TypedName ")" {return [a,b]}
   / "(" _ a:TypedName CommaSep b:TypedName CommaSep c:TypedName ")" { return [a,b,c] }
 
-Arguments "arguments"
+Arguments
   = "(" _ ")" { return [] }
   / "(" _ a:Argument _ ")" { return [a] }
   / "(" _ a:Argument CommaSep b:Argument _ ")" { return [a,b] }
   / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
 
-Argument "argument"
+Argument
   = StepCall
   / ValueArg
   / Name
 
-ValueArg "value arg"
+ValueArg
   = KeyedValue
   / IndexedValue
   / LiteralValue
 
-NamedValue "named value"
+NamedValue
   = KeyedValue
   / Name
 
-KeyedValue "keyed value"
+KeyedValue
   = object:Name "." key:NamedValue {return {type: "KeyedValue", object, key} }
 
-IndexedValue "indexed array"
+IndexedValue
   = array:Name "[" _ index:ValueArg _ "]" { return {type: "IndexedValue", array, index} }
 
-LiteralValue "literal value"
+LiteralValue
   = Number
   / Truth
   / Text
   / List
   / Dict
 
-Number "number"
+Number
   = Float
   / Integer
 
-Float "float"
+Float
   = [0-9]* "." [0-9]+ {return {type: 'Float', value: parseFloat(text())}}
 
-Integer "integer"
+Integer
   = [0-9]+ {return {type: 'Integer', value: parseInt(text(), 10)}}
 
-Truth "truth"
+Truth
   = "true" / "false" {return {type: 'Truth', value: text()==='true'}}
 
-Text "text"
+Text
   = '"' .* '"' { return {type: 'Text', value: text()} }
   / "'" .* "'" { return {type: 'Text', value: text()} }
 
-ValueList "value list"
+ValueList
   = vals:(Argument CommaSep)* val:Argument {let l = vals.map(a => a[0]); l.push(val); return l;}
 
-List "list"
+List
   = "[" list:ValueList "]" { return {type: 'List', value: list} }
 
-Dict "dict"
+Dict
   = "{" list:KeyValueList "}" { return {type: 'Dict', value: list} }
 
-KeyValue "key value"
+KeyValue
   = key:Name _ ":" _ value:Value { return {key, value} }
 
-KeyValueList "key value list"
+KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
 
-StepSignature "step signature"
+StepSignature
   = name:StepName _ params:Parameters {return {name, params}}
 
-StepBody "step body"
+StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs }
 
-LocalsBody "locals body"
+LocalsBody
   = "{" _ "locals" _ "{" _ locals:Value+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}}
 
-ValueBody "value body"
+ValueBody
   = "<=" _ expr:Expression  { return expr }
 
-Step "step"
+Step
  = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
-ContextSignature "context signature"
+ContextSignature
    = "context" __ name:Name _ params:Parameters {return {name, params}}
 
-ContextBody "context body"
+ContextBody
    = LocalsBody
    / StepBody
 
-Context "context"
+Context
   = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
-TriggerSignature "trigger signature"
+TriggerSignature
   = "trigger" __ name:Name _ "(" _ ")" {return {name}}
 
-Trigger "trigger"
+Trigger
   = sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
 
-Value "value"
+Value
   = sig:TypedName _ body:ValueBody _ ";" _ {return {type: 'Value', name: sig.name, returnType: sig.type, value: body}}
 
-Expression "expression"
+Expression
   = Comment
   / StepCall
   / Argument
 
-Comment "comment"
-  = "//" _ value:([^\n]*) _ { return {type: 'Comment', value: value.join('')}}
-  / "/*" _ value:(.*) _ "*/" _ { return {type: 'Comment', value: value.join('')}}
-
-StepCall "step call"
+StepCall
   = namespace:Name "." name:Name args:Arguments _ {return {type: 'StepCall', namespace, name, args}}
 
 _ "whitespace"

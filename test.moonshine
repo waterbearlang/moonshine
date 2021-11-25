@@ -2,12 +2,12 @@ Vector[
 
   Library [
 
-    // Basic constructor
+    // Basic constructor Value
     fromXY:Vector(x:Number, y:Number){
       Runtime.Vector(x,y)
     }
 
-    // Polar constructor
+    // Polar constructor Value
     fromMag_angle_unit:Vector(mag:Number, angle:Number, unit:AngleUnit){
       Runtime.Vector(
         Math.mult(Math.cos(Math.radians(angle, unit) ), mag),
