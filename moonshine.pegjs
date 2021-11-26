@@ -3,12 +3,12 @@
 //
 // Accepts Namespaced, typed Steps and constants
 
-Unit
+Unit "unit"
   = name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
 
-Comment
+Comment "comment"
   = "//" _ value:([^\n]+) _ { return {type: 'Comment', value: value.join('')}}
-  / "/*" _ value:(.+) _ "*/" _ { return {type: 'Comment', value: value.join('')}}
+  / "/\*" _ value:(.+) _ "\*/" _ { return {type: 'Comment', value: value.join('')}}
 
 Stage
   = "Stage" _ "[" _ values:Properties _ "]" _ {return {name, type: 'Stage', values}}

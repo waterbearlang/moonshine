@@ -11,10 +11,9 @@ try {
   if (!e.location) {
     throw e;
   }
-  console.error("Error parsing script");
-  console.error("\tLocation start: %o", e.location.start);
-  console.error("\tLocation end: %o", e.location.end);
-  console.error("\tMessage: %s", e.message);
+  console.error(
+    `Error parsing script at line ${e.location.start.line}, column ${e.location.start.column}: ${e.message}`
+  );
   process.exit();
 }
 
