@@ -1,0 +1,63 @@
+Vector[
+
+  Library [
+
+    // Basic constructor Value
+    fromXY:Vector(x:Number, y:Number){
+      Runtime.Vector(x,y)
+    }
+
+    // Polar constructor Value
+    fromMag_angle_unit:Vector(mag:Number, angle:Number, unit:AngleUnit){
+      Runtime.Vector(
+        Math.mult(Math.cos(Math.radians(angle, unit) ), mag),
+        Math.mult(Math.sin(Math.radians(angle, unit) ), mag)
+      )
+    }
+
+    // Vector math
+    add:Vector(a:Vector, b:Vector){
+      Runtime.prepVectors(a,b)
+      Runtime.Vector(Math.add(a.x, b.x), Math.add(a.y, b.y))
+    }
+
+    // Trigger
+    trigger whenMagExceedsStage(){
+      WhatsTheVector.victor(a)
+    }
+
+    // Trigger with Locals
+    trigger eachFrame (){
+      locals{
+        frameCount:Integer <= runtime.frameCount;
+        elapsed:Float <= runtime.elapsed;
+      }
+      Control.eachFrame(expressions)
+    }
+
+
+    // Context
+    context forEach (a:String[]){
+      String.fold(exprs)
+    }
+
+    // Context with locals
+    context withVector(v:Vector){
+      locals{
+        index:Number <= local.iteration;
+        value:Number <= v[local.iteration];
+      }
+      // do something with expressions
+      Vector.withVector(exprs)
+    }
+
+    // Value
+    unit:Vector <= Vector.unitVector();
+
+    // Step returns a constrained list
+    asArray:Number[2](vector:Vector){
+      [vector.x, vector.y]
+    }
+
+  ]
+]
