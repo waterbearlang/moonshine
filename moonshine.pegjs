@@ -3,21 +3,21 @@
 //
 // Accepts Namespaced, typed Steps and constants
 
-Unit "unit"
-  = name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
+Unit
+  = "unit" __ name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
 
-Comment "comment"
-  = "//" _ value:([^\n]+) _ { return {type: 'Comment', value: value.join('')}}
-  / "/\*" _ value:(.+) _ "\*/" _ { return {type: 'Comment', value: value.join('')}}
+Comment
+  = _ "//" _ value:([^\n]+) _ { return {type: 'Comment', value: value.join('')}}
+  / _ "/\*" _ value:(.+) _ "\*/" _ { return {type: 'Comment', value: value.join('')}}
 
 Stage
-  = "Stage" _ "[" _ values:Properties _ "]" _ {return {name, type: 'Stage', values}}
+  = "stage" _ "[" _ values:Properties _ "]" _ {return {name: 'Stage', type: 'Stage', values}}
 
 Library
-  = "Library" _ "[" _ values:Properties _ "]" _ {return {name, type: 'Library', values}}
+  = "library" _ "[" _ values:Properties _ "]" _ {return {name: 'Library', type: 'Library', values}}
 
 Sprite
-  = name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
+  = "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
 
 Things // later will include non-visible objects as well
   = ( Stage / Library / Sprite / Comment )+

@@ -1,6 +1,6 @@
-Vector[
+unit Vector[
 
-  Library [
+  library [
 
     // Basic constructor Value
     fromXY:Vector(x:Number, y:Number){
