@@ -250,14 +250,14 @@ function peg$parse(input, options) {
   var peg$f2 = function(values) {return {name: 'Stage', type: 'Stage', values}};
   var peg$f3 = function(values) {return {name: 'Library', type: 'Library', values}};
   var peg$f4 = function(name, values) {return {name, type: 'Sprite', values}};
-  var peg$f5 = function(fns) { return fns.map(a => a[0]) };
-  var peg$f6 = function(name) { name[1].unshift(name[0]); return name[1].join("") };
+  var peg$f5 = function(fns) { return fns };
+  var peg$f6 = function(name) { name[1].unshift(name[0]); return name[1].join("").trim() };
   var peg$f7 = function(name, values) {return {name, type:'Form', values}};
   var peg$f8 = function(name) {return name + "List"};
   var peg$f9 = function(name, len) {return name + "List/" + len.value};
   var peg$f10 = function(name, type, returnName) {return {name, type, returnName}};
   var peg$f11 = function(name, returnName) {return {name, type:null, returnName}};
-  var peg$f12 = function(name, type) {return {name,type, returnName:name}};
+  var peg$f12 = function(name, type) {return {name, type, returnName:name}};
   var peg$f13 = function() {return [] };
   var peg$f14 = function(a) { return [a] };
   var peg$f15 = function(a, b) {return [a,b]};

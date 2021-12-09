@@ -27,13 +27,13 @@ Things // later will include non-visible objects as well
 
 // As further properties are defined, add them here
 Properties
-  = fns:(Block / Form / Comment )+ { return fns.map(a => a[0]) }
+  = fns:(Block / Form / Comment )+ { return fns }
 
 // Blocks
 //   = (Block / Comment)+
 
 Name
-  = name:([a-zA-Z][ _a-zA-Z0-9]*) { name[1].unshift(name[0]); return name[1].join("") }
+  = name:([a-zA-Z][ _a-zA-Z0-9]*) { name[1].unshift(name[0]); return name[1].join("").trim() }
 
 Block
   = Trigger / Context / Step / Value
@@ -59,7 +59,7 @@ NamedReturnUntyped
   = name:Name _ '"' returnName:Name '"' {return {name, type:null, returnName}}
 
 TypedName
-  = name:Name _ ":" _ type:Type {return {name,type, returnName:name}}
+  = name:Name _ ":" _ type:Type {return {name, type, returnName:name}}
 
 StepName
   = NamedReturnType / TypedName

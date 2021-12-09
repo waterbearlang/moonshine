@@ -18,22 +18,29 @@ try {
 }
 
 console.assert(ast.name === "Vector", `expected "Vector", got "${ast.name}"`);
+console.assert(ast.type === "Unit", `expected "Unit", got "${ast.type}"`);
 console.assert(
-  ast.type === "Namespace",
-  'expected "Namespace", got "%s"',
-  ast.type
+  ast.values.length === 1,
+  `expected 1 value, got ${ast.values.length}`
+);
+let library = ast.values[0];
+console.assert(
+  library.name === "Library",
+  `expected "Library", got "${library.name}"`
 );
 console.assert(
-  ast.values.length === 18,
-  "expected 18 values, got %s",
-  ast.values.length
+  library.type === "Library",
+  `expected "Library", got "${library.type}"`
 );
-let values = ast.values.filter(v => v.type !== "Comment");
+console.assert(
+  library.values.length === 18,
+  `expected 18 values, got ${library.values.length}"`
+);
+let values = library.values.filter(v => v.type !== "Comment");
 fs.writeFileSync("test.out.json", JSON.stringify(values, null, 2));
 console.assert(
   values.length === 9,
-  "expected 9 non-comment values, got %s",
-  values.length
+  `expected 9 non-comment values, got ${values.length}`
 );
 console.assert(
   values[0].name === "fromXY",
@@ -87,8 +94,7 @@ console.assert(
 );
 console.assert(
   values[4].name === "eachFrame",
-  'expected %s name to be "eachFrame"',
-  values[4].name
+  `expected "${values[4].name}" name to be "eachFrame"`
 );
 console.assert(
   values[4].type === "Trigger",
@@ -104,8 +110,7 @@ console.assert(
 );
 console.assert(
   values[5].name === "forEach",
-  'expected %s name to be "forEach"',
-  values[5].name
+  `expected "${values[5].name}" name to be "forEach"`
 );
 console.assert(
   values[5].type === "Context",
@@ -137,9 +142,7 @@ console.assert(
 );
 console.assert(
   values[7].returnType === "Vector",
-  "expected %s to be a Vector, was %s",
-  values[7].name,
-  values[7].returnType
+  `expected "${values[7].name}" to be a Vector, was "${values[7].returnType}"`
 );
 console.assert(
   values[8].name === "asArray",

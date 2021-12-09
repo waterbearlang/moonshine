@@ -5,7 +5,7 @@
   "main": "moonshine.js",
   "scripts": {
     "buildmodule": "peggy moonshine.pegjs && node modularize.js",
-    "test": "peggy moonshine.pegjs && node modularize.js && node test.js",
+    "test": "peggy moonshine.pegjs && node modularize.js && node test.js"
   },
   "repository": {
     "type": "git",
