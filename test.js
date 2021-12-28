@@ -1,9 +1,10 @@
-const moonshine = require("./moonshine.js");
+const moonshine = require("./moonshine_cjs.js");
 const fs = require("fs");
 
 const script = fs.readFileSync("test.moonshine", "utf8");
-//console.log(script);
+
 let ast;
+
 try {
   ast = moonshine.parse(script);
   // console.log(JSON.stringify(ast, null, 2));
