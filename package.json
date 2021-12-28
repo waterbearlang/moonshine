@@ -1,12 +1,12 @@
 {
   "name": "moonshine",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Text version of Waterbear",
   "main": "moonshine.js",
   "scripts": {
     "buildmodule": "peggy --format es moonshine.pegjs && peggy -o moonshine_cjs.js moonshine.pegjs",
     "pretest": "npm run buildmodule",
-    "test": "node test.js",
+    "test": "jest",
     "testonly": "jest"
   },
   "repository": {
