@@ -26,11 +26,26 @@ Things // later will include non-visible objects as well
 //   = (Block / Form / Sound / Costume / Spritesheet / Cycle / Comment )+
 
 // As further properties are defined, add them here
-Properties
-  = fns:(Block / Form / Comment )+ { return fns }
+Properties "properties"
+  = (Block / Form / Sounds / Costumes / Struct / Comment )+
 
 // Blocks
 //   = (Block / Comment)+
+
+Sounds
+  = "sounds" _ "[" _ (Sound / Comment)+ _ "]"
+
+Costumes
+  = "costumes" _ "[" _ (Costume / Comment)+ _ "]"
+
+Sound
+  = "not defined"
+
+Costume
+  = "not defined"
+
+Struct
+  = "define struct" __ Name _ "[" (KeyValue / Comment)+ "]"
 
 Name
   = name:([a-zA-Z][ _a-zA-Z0-9]*) { name[1].unshift(name[0]); return name[1].join("").trim() }
