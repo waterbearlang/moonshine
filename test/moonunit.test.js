@@ -7,10 +7,13 @@ const testdata = `unit Pong [
 const moonshine = require("../moonshine_cjs.js");
 
 test("parse", () => {
-  expect(moonshine.parse(testdata));
+  // make sure no exceptions are thrown during parsing
+  let ast = moonshine.parse(testdata);
+  expect(ast); // not null or undefined
 });
 
 test("parse unit", () => {
-  expect(moonshine.parse(testdata).type === "Unit");
-  expect(moonshine.parse(testdata).name === "Pong");
+  let ast = moonshine.parse(testdata);
+  expect(ast.type === "Unit");
+  expect(ast.name === "Pong");
 });

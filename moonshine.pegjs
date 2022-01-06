@@ -27,16 +27,16 @@ Things // later will include non-visible objects as well
 
 // As further properties are defined, add them here
 Properties "properties"
-  = (Block / Form / Sounds / Costumes / Struct / Comment )+
+  = (TriggerCall / Form / Sounds / Costumes / Struct / Comment )+
 
 // Blocks
 //   = (Block / Comment)+
 
 Sounds
-  = "sounds" _ "[" _ (Sound / Comment)+ _ "]"
+  = _ "sounds" _ "[" _ (Sound / Comment)+ _ "]"
 
 Costumes
-  = "costumes" _ "[" _ (Costume / Comment)+ _ "]"
+  = _ "costumes" _ "[" _ (Costume / Comment)+ _ "]"
 
 Sound
   = "not defined"
@@ -50,8 +50,8 @@ Struct
 Name
   = name:([a-zA-Z][ _a-zA-Z0-9]*) { name[1].unshift(name[0]); return name[1].join("").trim() }
 
-Block
-  = Trigger / Context / Step / Value
+BlockDef
+  = TriggerDef / ContextDef / StepDef / ValueDef
 
 Form
   = name:Name "[" _ values:KeyValueList _ "]" _ {return {name, type:'Form', values}}
@@ -148,7 +148,7 @@ Dict
   = "{" list:KeyValueList "}" { return {type: 'Dict', value: list} }
 
 KeyValue
-  = key:Name _ ":" _ value:Value { return {key, value} }
+  = key:Name _ ":" _ value:ValueCall { return {key, value} }
 
 KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
@@ -160,12 +160,12 @@ StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs }
 
 LocalsBody
-  = "{" _ "locals" _ "{" _ locals:Value+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}}
+  = "{" _ "locals" _ "{" _ locals:ValueCall+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}}
 
 ValueBody
   = "<=" _ expr:Expression  { return expr }
 
-Step
+StepDef
  = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
 ContextSignature
@@ -175,25 +175,42 @@ ContextBody
    = LocalsBody
    / StepBody
 
-Context
+ContextDef
   = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
-  = "trigger" __ name:Name _ "(" _ ")" {return {name}}
+  = _ "when" __ name:Name _ "(" _ ")" {return {name}}
 
-Trigger
+TriggerDef
   = sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
 
-Value
+ValueDef
   = sig:TypedName _ body:ValueBody _ ";" _ {return {type: 'Value', name: sig.name, returnType: sig.type, value: body}}
 
 Expression
   = Comment
   / StepCall
+  / ContextCall
+  / ValueCall
   / Argument
 
+FlexibleName
+  = NamespacedName / Name {return {namespace:null, name}}
+
+NamespacedName
+  = namespace:Name "." name:Name {return {namespace, name}}
+
 StepCall
-  = namespace:Name "." name:Name args:Arguments _ {return {type: 'StepCall', namespace, name, args}}
+  = fn:FlexibleName _ args:Arguments _ {return {type: 'StepCall', namespace:fn.namespace, name:fn.name, args, exprs:null}}
+
+TriggerCall
+  = fn:FlexibleName _ "[" _ exprs:Expression+ _ "]" _ {return {type: "TriggerCall", namespace:fn.namespace, name:fn.name, args:null, exprs}}
+
+ContextCall
+  = fn:FlexibleName _ args:Arguments _ "[" _ exprs:Expression+ _ "]" _ {return {type: 'ContextCall', namespace:fn.namespace, name: fn.name, args, exprs}}
+
+ValueCall
+  = fn:FlexibleName _ args:Arguments _ {return {type: "StepCall", namespace:fn.namespace, name:fn.name, args, exprs:null}}
 
 _ "whitespace"
   = [ \t\n\r]* {return undefined}
