@@ -4,7 +4,7 @@
   "description": "Text version of Waterbear",
   "main": "moonshine.js",
   "scripts": {
-    "buildmodule": "peggy --format es moonshine.pegjs && peggy -o moonshine_cjs.js moonshine.pegjs",
+    "buildmodule": "peggy --format es --allowed-start-rules Unit moonshine.pegjs && peggy --allowed-start-rules Unit -o moonshine_cjs.js moonshine.pegjs",
     "pretest": "npm run buildmodule",
     "test": "jest",
     "testonly": "jest"

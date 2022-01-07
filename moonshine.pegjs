@@ -3,6 +3,63 @@
 //
 // Accepts Namespaced, typed Steps and constants
 
+// Library of useful rules
+
+_ "optional whitespace"
+  = [ \t\n\r]* {return undefined}
+
+__ "mandatory whitespace"
+  = [ \t]+ {return undefined}
+
+WS "just space"
+  = [ \t]*
+
+NL "new line"
+  = WS [\r\n]+ {return undefined}
+
+d "digit"
+  = [0-9]
+
+D "not digit"
+  = [^0-9]
+
+w "alphanumeric"
+  = [A-Za-z0-9_]
+
+W "not alphanumeric"
+  = [^A-Za-z0-9_]
+
+s "single whitespace"
+  = [ \f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+S "not whitespace"
+  = [^ \f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+X "neither digit nor whitespace nor structure characters"
+  = [^ 0-9\[\]\(\)\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+x "not non-space whitespace nor structure characters"
+  = [^\[\]\(\)\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+t "horizontal tab"
+  = [\t]
+
+r "carriage return"
+  = [\r]
+
+n "newline"
+  = [\n]
+
+v "vertical tab"
+  = [\v]
+
+f "form feed"
+  = [\f]
+
+
+
+// Unit is the starting point for a Moonshine script
+
 Unit
   = "unit" __ name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
 
@@ -17,20 +74,14 @@ Library
   = "library" _ "[" _ values:Properties _ "]" _ {return {name: 'Library', type: 'Library', values}}
 
 Sprite
-  = "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
+  = _ "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
 
 Things // later will include non-visible objects as well
   = ( Stage / Library / Sprite / Comment )+
 
-// Properties
-//   = (Block / Form / Sound / Costume / Spritesheet / Cycle / Comment )+
-
 // As further properties are defined, add them here
-Properties "properties"
-  = (TriggerCall / Form / Sounds / Costumes / Struct / Comment )+
-
-// Blocks
-//   = (Block / Comment)+
+Properties
+  = (TriggerCall / Form / Sounds / Costumes / Struct / BlockDef / Comment )+
 
 Sounds
   = _ "sounds" _ "[" _ (Sound / Comment)+ _ "]"
@@ -48,19 +99,19 @@ Struct
   = "define struct" __ Name _ "[" (KeyValue / Comment)+ "]"
 
 Name
-  = name:([a-zA-Z][ _a-zA-Z0-9]*) { name[1].unshift(name[0]); return name[1].join("").trim() }
+  = _ name:( X x*) { name[1].unshift(name[0]); console.log( `name: ${name[1].join("").trim()}`); return name[1].join("").trim() }
 
 BlockDef
   = TriggerDef / ContextDef / StepDef / ValueDef
 
 Form
-  = name:Name "[" _ values:KeyValueList _ "]" _ {return {name, type:'Form', values}}
+  = _ name:Name "[" _ values:KeyValueList _ "]" _ {return {name, type:'Form', values}}
 
 TypedList
-  = name:Name "[]" {return name + "List"}
+  = _ name:Name "[]" {return name + "List"}
 
 ConstrainedTypedList
-  = name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
+  = _ name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
 
 Type
   = ConstrainedTypedList
@@ -95,7 +146,7 @@ Arguments
   / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
 
 Argument
-  = StepCall
+  = ValueCall
   / ValueArg
   / Name
 
@@ -154,7 +205,7 @@ KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
 
 StepSignature
-  = name:StepName _ params:Parameters {return {name, params}}
+  = _ "define" __ name:StepName _ params:Parameters {return {name: "define " + name, params}}
 
 StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs }
@@ -169,7 +220,7 @@ StepDef
  = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
 ContextSignature
-   = "context" __ name:Name _ params:Parameters {return {name, params}}
+   = _ "define" __ name:Name _ params:Parameters {return {name: "define " + name, params}}
 
 ContextBody
    = LocalsBody
@@ -179,23 +230,25 @@ ContextDef
   = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
-  = _ "when" __ name:Name _ "(" _ ")" {return {name}}
+  = _ "define" __ "when" __ name:Name _ "(" _ ")" {return {name: 'when ' + name}}
 
 TriggerDef
-  = sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
+  = _ sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
 
 ValueDef
   = sig:TypedName _ body:ValueBody _ ";" _ {return {type: 'Value', name: sig.name, returnType: sig.type, value: body}}
 
 Expression
-  = Comment
-  / StepCall
+  = StepCall
   / ContextCall
   / ValueCall
   / Argument
 
 FlexibleName
-  = NamespacedName / Name {return {namespace:null, name}}
+  = NamespacedName / UnnamespacedName
+
+UnnamespacedName
+  = name:Name {return {namespace:null, name}}
 
 NamespacedName
   = namespace:Name "." name:Name {return {namespace, name}}
@@ -204,23 +257,12 @@ StepCall
   = fn:FlexibleName _ args:Arguments _ {return {type: 'StepCall', namespace:fn.namespace, name:fn.name, args, exprs:null}}
 
 TriggerCall
-  = fn:FlexibleName _ "[" _ exprs:Expression+ _ "]" _ {return {type: "TriggerCall", namespace:fn.namespace, name:fn.name, args:null, exprs}}
+  = _ "when" __ name:Name _ "[" _ exprs:Expression+ _ "]" _ {return {type: "TriggerCall", namespace:null, name, args:null, exprs}}
 
 ContextCall
   = fn:FlexibleName _ args:Arguments _ "[" _ exprs:Expression+ _ "]" _ {return {type: 'ContextCall', namespace:fn.namespace, name: fn.name, args, exprs}}
 
 ValueCall
-  = fn:FlexibleName _ args:Arguments _ {return {type: "StepCall", namespace:fn.namespace, name:fn.name, args, exprs:null}}
+  = fn:FlexibleName _ args:Arguments _ {return {type: "ValueCall", namespace:fn.namespace, name:fn.name, args, exprs:null}}
 
-_ "whitespace"
-  = [ \t\n\r]* {return undefined}
-
-__ "mandatory whitespace"
-  = [ \t]+ {return undefined}
-
-WS "just space"
-  = [ \t]*
-
-NL "new line"
-  = WS [\r\n]+ {return undefined}
 

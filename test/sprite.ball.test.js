@@ -1,20 +1,20 @@
 const testdata = `unit Pong [
   sprite Ball [
 
+    when 🏁 clicked [
+      Initialize
+      Reset
+      repeat until ((Game Over) = (1))[
+        move (speed) steps
+      ]
+    ]
+
     costumes [
       // Not supported yet
     ]
 
     sounds [
       // Not supported yet
-    ]
-
-    when 🏁 clicked [
-      Initialize
-      Reset
-      repeat until (Game Over = 1)[
-        move (speed) steps
-      ]
     ]
 
     define Reset [
@@ -60,6 +60,7 @@ beforeAll(() => {
 });
 
 test("unit", () => {
+  console.log(`unit test ast: ${JSON.stringify(ast)}`);
   expect(ast.name === "Pong");
   expect(ast.type === "Unit");
 });
