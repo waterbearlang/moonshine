@@ -133,6 +133,18 @@ StepName
 CommaSep
   = _ "," _
 
+DefSignature
+  = _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? "(" pc:TypedName ")" nd:Name? {return { name: [na,nb,nc,nd], params: [pa,pb,pc] })
+  / _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? {return { name: [na,nb,nc], params: [pa,pb] })
+  _ na:Name? "(" pa:TypedName ")" nb:Name? {return { name: [na,nb], params: [pa] })
+  _ na:Name {return { name: [na], params: [] })
+
+CallSignature
+  = _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? "(" ac:Argument ")" nd:Name? {return { name: [na,nb,nc,nd], args: [aa, ab, ac] })
+  / _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? {return { name: [na,nb,nc], args: [aa, ab] })
+  _ na:Name? "(" aa:Argument ")" nb:Name? {return { name: [na,nb], args: [aa] })
+  _ na:Name {return { name: [na], args: [] })
+
 Parameters
   = "(" _ ")" {return [] }
   / "(" _ a:TypedName _ ")" { return [a] }
@@ -205,7 +217,7 @@ KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
 
 StepSignature
-  = _ "define" __ name:StepName _ params:Parameters {return {name: "define " + name, params}}
+  = _ "define" __ sig:DefSignature {return {name: "define " + sig:name.join('()'), params:sig.params}}
 
 StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs }
@@ -220,7 +232,7 @@ StepDef
  = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
 ContextSignature
-   = _ "define" __ name:Name _ params:Parameters {return {name: "define " + name, params}}
+   = _ "define" __ sig:DefSignature {return {name: "define " + sig.name.join('()', sig.params}}
 
 ContextBody
    = LocalsBody
@@ -230,7 +242,7 @@ ContextDef
   = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
-  = _ "define" __ "when" __ name:Name _ "(" _ ")" {return {name: 'when ' + name}}
+  = _ "define" __ "when" __ name:Name {return {name: 'when ' + name}}
 
 TriggerDef
   = _ sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
