@@ -18,7 +18,7 @@ const testdata = `unit Pong [
     ]
 
     define Reset [
-      goto x: (0) y: (-45)
+      go to x: (0) y: (-45)
       point in direction (pick random (1) to (360))
       wait (0.5) seconds
     ]

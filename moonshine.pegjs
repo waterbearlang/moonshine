@@ -63,9 +63,9 @@ f "form feed"
 Unit
   = "unit" __ name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
 
-Comment
-  = _ "//" _ value:([^\n]+) _ { return {type: 'Comment', value: value.join('')}}
-  / _ "/\*" _ value:(.+) _ "\*/" _ { return {type: 'Comment', value: value.join('')}}
+Comment "comment"
+  = _ "//" _ value:([^\n]+) _ { return {type: 'Comment', name: "comment", value: value.join('')}}
+  / _ "/\*" _ value:(.+) _ "\*/" _ { return {type: 'Comment', name: "comment", value: value.join('')}}
 
 Stage
   = "stage" _ "[" _ values:Properties _ "]" _ {return {name: 'Stage', type: 'Stage', values}}
@@ -77,17 +77,17 @@ Sprite
   = _ "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
 
 Things // later will include non-visible objects as well
-  = ( Stage / Library / Sprite / Comment )+
+  = ( Comment / Stage / Library / Sprite )+
 
 // As further properties are defined, add them here
 Properties
-  = (TriggerCall / Form / Sounds / Costumes / Struct / BlockDef / Comment )+
+  = (Comment / BlockDef / TriggerCall / Form / Sounds / Costumes / Struct )+
 
 Sounds
-  = _ "sounds" _ "[" _ (Sound / Comment)+ _ "]"
+  = _ "sounds" _ "[" _ (Comment / Sound)+ _ "]"
 
 Costumes
-  = _ "costumes" _ "[" _ (Costume / Comment)+ _ "]"
+  = _ "costumes" _ "[" _ (Comment / Costume)+ _ "]"
 
 Sound
   = "not defined"
@@ -96,13 +96,13 @@ Costume
   = "not defined"
 
 Struct
-  = "define struct" __ Name _ "[" (KeyValue / Comment)+ "]"
+  = "define struct" __ Name _ "[" (Comment / KeyValue)+ "]"
 
-Name
+Name "name"
   = _ name:( X x*) { name[1].unshift(name[0]); console.log( `name: ${name[1].join("").trim()}`); return name[1].join("").trim() }
 
-BlockDef
-  = TriggerDef / ContextDef / StepDef / ValueDef
+BlockDef "blockdef"
+  = StepDef / ContextDef / ValueDef
 
 Form
   = _ name:Name "[" _ values:KeyValueList _ "]" _ {return {name, type:'Form', values}}
@@ -118,7 +118,7 @@ Type
   / TypedList
   / Name
 
-NamedReturnType
+NamedReturnType "named return type"
   = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}}
 
 NamedReturnUntyped
@@ -134,16 +134,41 @@ CommaSep
   = _ "," _
 
 DefSignature
-  = _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? "(" pc:TypedName ")" nd:Name? {return { name: [na,nb,nc,nd], params: [pa,pb,pc] })
-  / _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? {return { name: [na,nb,nc], params: [pa,pb] })
-  _ na:Name? "(" pa:TypedName ")" nb:Name? {return { name: [na,nb], params: [pa] })
-  _ na:Name {return { name: [na], params: [] })
+  = DefSig3
+  / DefSig2
+  / DefSig1
+  / DefSig0
+
+DefSig3 "defsig3"
+  = _ "define" _ na:Name? _ "(" pa:TypedName ")" _ nb:Name? _ "(" pb:TypedName ")" _ nc:Name? _ "(" pc:TypedName ")" _ nd:Name? _ {return { nameParts: [na,nb,nc,nd], name:[na,nb,nc,nd].join('()'), params: [pa,pb,pc] }}
+
+DefSig2 "defsig2"
+  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? {return { nameParts: [na,nb,nc], name:[na,nb,nc].join('()'), params: [pa,pb] }}
+
+DefSig1 "defsig1"
+  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? {return { nameParts: [na,nb], name: [na,nb].join('()'), params: [pa] }}
+
+DefSig0 "defsig0"
+  = _ "define" _ na:Name {return { nameParts: [na], name:na, params: [] }}
+
 
 CallSignature
-  = _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? "(" ac:Argument ")" nd:Name? {return { name: [na,nb,nc,nd], args: [aa, ab, ac] })
-  / _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? {return { name: [na,nb,nc], args: [aa, ab] })
-  _ na:Name? "(" aa:Argument ")" nb:Name? {return { name: [na,nb], args: [aa] })
-  _ na:Name {return { name: [na], args: [] })
+  = CallSig3
+  / CallSig2
+  / CallSig1
+  / CallSig0
+
+CallSig3 "callsig3"
+  = _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? "(" ac:Argument ")" nd:Name? {return { nameParts:[na,nb,nc,nd], name:[na,nb,nc,nd].join('()'), args:[aa, ab, ac] }}
+
+CallSig2 "callsig2"
+  = _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? {return { nameParts: [na,nb,nc], name:[na,nb,nc].join('()'), args:[aa, ab] }}
+
+CallSig1 "callsig1"
+  = _ na:Name? "(" aa:Argument ")" nb:Name? {return { nameParts:[na,nb], name:[na,nb].join('()'), args:[aa] }}
+
+CallSig0 "callsig0"
+  = _ na:Name {return { nameParts:[na], name:na, args:[] }}
 
 Parameters
   = "(" _ ")" {return [] }
@@ -216,8 +241,8 @@ KeyValue
 KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
 
-StepSignature
-  = _ "define" __ sig:DefSignature {return {name: "define " + sig:name.join('()'), params:sig.params}}
+// StepSignature
+//   = _ "define" __ sig:DefSignature {return {name: "define " + sig:name.join('()'), params:sig.params}}
 
 StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs }
@@ -229,29 +254,30 @@ ValueBody
   = "<=" _ expr:Expression  { return expr }
 
 StepDef
- = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
+ = sig:DefSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
-ContextSignature
-   = _ "define" __ sig:DefSignature {return {name: "define " + sig.name.join('()', sig.params}}
+// ContextSignature
+//    = _ "define" __ sig:DefSignature {return {name: "define " + sig.name.join('()', sig.params}}
 
 ContextBody
    = LocalsBody
    / StepBody
 
 ContextDef
-  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
+  = sig:DefSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
   = _ "define" __ "when" __ name:Name {return {name: 'when ' + name}}
 
 TriggerDef
-  = _ sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
+  = _ sig:DefSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
 
 ValueDef
   = sig:TypedName _ body:ValueBody _ ";" _ {return {type: 'Value', name: sig.name, returnType: sig.type, value: body}}
 
 Expression
-  = StepCall
+  = Comment
+  / StepCall
   / ContextCall
   / ValueCall
   / Argument
@@ -266,15 +292,15 @@ NamespacedName
   = namespace:Name "." name:Name {return {namespace, name}}
 
 StepCall
-  = fn:FlexibleName _ args:Arguments _ {return {type: 'StepCall', namespace:fn.namespace, name:fn.name, args, exprs:null}}
+  = _ cs:CallSignature _ {return {type: 'StepCall', name:cs.name, args:cs.args, exprs:null}}
 
 TriggerCall
-  = _ "when" __ name:Name _ "[" _ exprs:Expression+ _ "]" _ {return {type: "TriggerCall", namespace:null, name, args:null, exprs}}
+  = _ "when" __ name:Name _ "[" _ exprs:Expression+ _ "]" _ {return {type: "TriggerCall", name, args:null, exprs}}
 
 ContextCall
-  = fn:FlexibleName _ args:Arguments _ "[" _ exprs:Expression+ _ "]" _ {return {type: 'ContextCall', namespace:fn.namespace, name: fn.name, args, exprs}}
+  = _ cs:CallSignature _ "[" _ exprs:Expression+ _ "]" _ {return {type: 'ContextCall', name: cs.name, args:cs.args, exprs}}
 
 ValueCall
-  = fn:FlexibleName _ args:Arguments _ {return {type: "ValueCall", namespace:fn.namespace, name:fn.name, args, exprs:null}}
+  = _ cs:CallSignature _ {return {type: "ValueCall", name:cs.name, args:cs.args, exprs:null}}
 
 
