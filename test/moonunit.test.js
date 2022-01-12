@@ -4,7 +4,7 @@ const testdata = `unit Pong [
   ]
 ]`;
 
-const moonshine = require("../moonshine_cjs.js");
+import moonshine from "moonshine.js"
 
 test("parse", () => {
   // make sure no exceptions are thrown during parsing
@@ -14,6 +14,7 @@ test("parse", () => {
 
 test("parse unit", () => {
   let ast = moonshine.parse(testdata);
-  expect(ast.type === "Unit");
-  expect(ast.name === "Pong");
+  expect(ast.units.length === 1);
+  expect(ast.units[0].type === "Unit");
+  expect(ast.units[0].name === "Pong");
 });

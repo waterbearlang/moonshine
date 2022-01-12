@@ -24,9 +24,7 @@
     "url": "https://github.com/waterbearlang/moonshine/issues"
   },
   "homepage": "https://github.com/waterbearlang/moonshine#readme",
-  "dependencies": {
-    "peggy": "^1.2.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "jest": "^27.4.5"
   }

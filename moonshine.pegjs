@@ -57,24 +57,23 @@ f "form feed"
   = [\f]
 
 
-
 // Unit is the starting point for a Moonshine script
 
 Unit
-  = "unit" __ name:Name _ "[" _ values:Things _ "]" _ {return {name, type: 'Unit', values}}
+  = "unit" __ name:Name _ "[" _ values:Things _ "]" _ {console.log(name); return {name, type: 'Unit', values}}
 
 Comment "comment"
-  = _ "//" _ value:([^\n]+) _ { return {type: 'Comment', name: "comment", value: value.join('')}}
-  / _ "/\*" _ value:(.+) _ "\*/" _ { return {type: 'Comment', name: "comment", value: value.join('')}}
+  = _ "//" _ value:([^\n]+) _ { console.log(`comment: ${value.join('')}`); return {type: 'Comment', name: "comment", value: value.join('')}}
+  / _ "/\*" _ value:(.+) _ "\*/" _ {console.log(`comment: ${value.join()}`); return {type: 'Comment', name: "comment", value: value.join('')}}
 
 Stage
-  = "stage" _ "[" _ values:Properties _ "]" _ {return {name: 'Stage', type: 'Stage', values}}
+  = "stage" _ "[" _ values:Properties _ "]" _ {console.log("stage"); return {name: 'Stage', type: 'Stage', values}}
 
 Library
-  = "library" _ "[" _ values:Properties _ "]" _ {return {name: 'Library', type: 'Library', values}}
+  = "library" _ "[" _ values:Properties _ "]" _ {console.log("library"); return {name: 'Library', type: 'Library', values}}
 
 Sprite
-  = _ "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {return {name, type: 'Sprite', values}}
+  = _ "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {console.log(`sprite ${name}`); return {name, type: 'Sprite', values}}
 
 Things // later will include non-visible objects as well
   = ( Comment / Stage / Library / Sprite )+
@@ -99,7 +98,7 @@ Struct
   = "define struct" __ Name _ "[" (Comment / KeyValue)+ "]"
 
 Name "name"
-  = _ name:( X x*) { name[1].unshift(name[0]); console.log( `name: ${name[1].join("").trim()}`); return name[1].join("").trim() }
+  = _ name:( X x*) { name[1].unshift(name[0]); console.log( `name: "${name[1].join("")}"`); return name[1].join("").trim() }
 
 BlockDef "blockdef"
   = StepDef / ContextDef / ValueDef
@@ -140,16 +139,16 @@ DefSignature
   / DefSig0
 
 DefSig3 "defsig3"
-  = _ "define" _ na:Name? _ "(" pa:TypedName ")" _ nb:Name? _ "(" pb:TypedName ")" _ nc:Name? _ "(" pc:TypedName ")" _ nd:Name? _ {return { nameParts: [na,nb,nc,nd], name:[na,nb,nc,nd].join('()'), params: [pa,pb,pc] }}
+  = _ "define" _ na:Name? _ "(" pa:TypedName ")" _ nb:Name? _ "(" pb:TypedName ")" _ nc:Name? _ "(" pc:TypedName ")" _ nd:Name? _ {console.log("defsig3"); return { nameParts: [na,nb,nc,nd], name:[na,nb,nc,nd].join('()'), params: [pa,pb,pc] }}
 
 DefSig2 "defsig2"
-  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? {return { nameParts: [na,nb,nc], name:[na,nb,nc].join('()'), params: [pa,pb] }}
+  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? {console.log("defsig2"); return { nameParts: [na,nb,nc], name:[na,nb,nc].join('()'), params: [pa,pb] }}
 
 DefSig1 "defsig1"
-  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? {return { nameParts: [na,nb], name: [na,nb].join('()'), params: [pa] }}
+  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? {console.log("defsig1"); return { nameParts: [na,nb], name: [na,nb].join('()'), params: [pa] }}
 
 DefSig0 "defsig0"
-  = _ "define" _ na:Name {return { nameParts: [na], name:na, params: [] }}
+  = _ "define" _ na:Name {console.log("defsig0"); return { nameParts: [na], name:na, params: [] }}
 
 
 CallSignature
