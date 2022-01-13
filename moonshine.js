@@ -76,4 +76,15 @@ function isUnit(line){
   // OK, this is going to get a bit complex
 }
 
+<<<<<<< Updated upstream
 export default {parse, isWhitespace, isComment, isUnit, isName};
+=======
+<<<<<<< Updated upstream
+export {
+=======
+export default {
+>>>>>>> Stashed changes
+  peg$SyntaxError as SyntaxError,
+  peg$parse as parse
+};
+>>>>>>> Stashed changes

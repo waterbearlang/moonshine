@@ -4,7 +4,7 @@ const testdata = `unit Pong [
   ]
 ]`;
 
-import moonshine from "moonshine.js"
+import moonshine from "../moonshine.js";
 
 test("parse", () => {
   // make sure no exceptions are thrown during parsing

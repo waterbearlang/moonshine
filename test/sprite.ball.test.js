@@ -44,7 +44,7 @@ const testdata = `unit Pong [
 
 let ast;
 
-const moonshine = require("../moonshine_cjs.js");
+import moonshine from "../moonshine.js";
 
 beforeAll(() => {
   try {

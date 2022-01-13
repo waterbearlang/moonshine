@@ -3,11 +3,9 @@
   "version": "0.3.0",
   "description": "Text version of Waterbear",
   "main": "moonshine.js",
+  "type": "module",
   "scripts": {
-    "buildmodule": "peggy --format es --allowed-start-rules Unit moonshine.pegjs && peggy --allowed-start-rules Unit -o moonshine_cjs.js moonshine.pegjs",
-    "pretest": "npm run buildmodule",
-    "test": "jest",
-    "testonly": "jest"
+    "test": "mocha"
   },
   "repository": {
     "type": "git",
@@ -24,8 +22,7 @@
     "url": "https://github.com/waterbearlang/moonshine/issues"
   },
   "homepage": "https://github.com/waterbearlang/moonshine#readme",
-  "dependencies": {},
   "devDependencies": {
-    "jest": "^27.4.5"
+    "mocha": "^9.1.3"
   }
 }
