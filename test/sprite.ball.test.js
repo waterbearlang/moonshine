@@ -45,28 +45,16 @@ const testdata = `unit Pong [
 let ast;
 
 import moonshine from "../moonshine.js";
+import assert from "assert";
 
-beforeAll(() => {
-  try {
+describe("Unit", function () {
+  before(() => {
     ast = moonshine.parse(testdata);
-  } catch (e) {
-    if (!e.location) {
-      throw e;
-    }
-    console.log(
-      `Error parsing script at line ${e.location.start.line}, col ${e.location.start.column}: ${e.message}`
-    );
-  }
-});
-
-test("unit", () => {
-  console.log(`unit test ast: ${JSON.stringify(ast)}`);
-  expect(ast.name === "Pong");
-  expect(ast.type === "Unit");
-});
-
-test("output", () => {
-  let fs = require("fs");
-  fs.writeFileSync("test.out.json", JSON.stringify(ast, null, 2));
-  expect(ast);
+  });
+  describe("parse", () => {
+    it("unit should be found", () => ast.units.length === 1);
+    it("unit should not be null or undefined", () => !!ast.units[0]);
+    it("unit should have type Unit", () => ast.units[0].type === "Unit");
+    it("unit should be named Pong", () => ast.units[0].name === "Pong");
+  });
 });

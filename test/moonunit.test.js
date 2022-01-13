@@ -5,16 +5,18 @@ const testdata = `unit Pong [
 ]`;
 
 import moonshine from "../moonshine.js";
+import assert from "assert";
 
-test("parse", () => {
-  // make sure no exceptions are thrown during parsing
-  let ast = moonshine.parse(testdata);
-  expect(ast); // not null or undefined
-});
+let ast;
 
-test("parse unit", () => {
-  let ast = moonshine.parse(testdata);
-  expect(ast.units.length === 1);
-  expect(ast.units[0].type === "Unit");
-  expect(ast.units[0].name === "Pong");
+describe("Unit", function () {
+  before(() => {
+    ast = moonshine.parse(testdata);
+  });
+  describe("parse", () => {
+    it("unit should be found", () => ast.units.length === 1);
+    it("unit should not be null or undefined", () => !!ast.units[0]);
+    it("unit should have type Unit", () => ast.units[0].type === "Unit");
+    it("unit should be named Pong", () => ast.units[0].name === "Pong");
+  });
 });
