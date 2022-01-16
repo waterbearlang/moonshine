@@ -14,9 +14,11 @@ describe("Unit", function () {
     ast = moonshine.parse(testdata);
   });
   describe("parse", () => {
-    it("unit should be found", () => ast.units.length === 1);
-    it("unit should not be null or undefined", () => !!ast.units[0]);
-    it("unit should have type Unit", () => ast.units[0].type === "Unit");
-    it("unit should be named Pong", () => ast.units[0].name === "Pong");
+    it("unit should be found", () => assert.equal(ast.units.length, 1));
+    it("unit should not be null or undefined", () => assert.ok(ast.units[0]));
+    it("unit should have type Unit", () =>
+      assert.equal(ast.units[0].type, "Unit"));
+    it("unit should be named Pong", () =>
+      assert.equal(ast.units[0].name, "Pong"));
   });
 });
