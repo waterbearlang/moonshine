@@ -131,7 +131,7 @@ class Parser {
   }
 
   Unit(lines) {
-    // Get name and signature from first line
+    // Get name from first line
     // Iterate through lines getting Comment, Stage, Library, Sprite
     let theLine = lines[this.lineCount];
     let name = /\s*unit\s+(?<name>.*)\[\s*/.exec(theLine).groups.name;
@@ -145,16 +145,80 @@ class Parser {
       if (theLine === "]") {
         this.lineCount++;
         break;
-      } else {
-        if (isComment(theLine)) {
+      }
+      switch (this.unitLineType(theLine)) {
+        case Parser.COMMENT:
           comments.push(this.Comment(lines));
-        }
-        if (isSprite(theLine)) {
-          comments.push(this.Sprite(lines));
-        }
+          break;
+        case Parser.SPRITE:
+          sprites.push(this.Sprite(lines));
+          break;
+        case Parser.STAGE:
+          stages.push(this.Stage(lines));
+          break;
+        case Parser.LIBRARY:
+          libraries.push(this.Library(lines));
+          break;
+        default:
+          this.unitError(lines);
+          break;
       }
     }
-    return { type: "Unit", name, args, expressions };
+    return { type: "Unit", name, sprites, stages, libraries, comments };
+  }
+
+  Sprite(lines) {
+    let theLine = lines[this.lineCount];
+    let name = /\s*unit\s+(?<name>.*)\[\s*/.exec(theLine).groups.name;
+    let costumes = [];
+    let blockdefs = [];
+    let triggerCalls = [];
+    let forms = [];
+    let sounds = [];
+    let structs = [];
+    let comments = [];
+    while (true) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine === "]") {
+        this.lineCount++;
+        break;
+      }
+      switch (this.unitLineType(theLine)) {
+        case Parser.COMMENT:
+          comments.push(this.Comment(lines));
+          break;
+        case Parser.COSTUME:
+          costumes.push(this.COSTUME(lines));
+          break;
+        case Parser.TRIGGER_CALL:
+          triggerCalls.push(this.TriggerCalls(lines));
+          break;
+        case Parser.FORM:
+          forms.push(this.Form(lines));
+          break;
+        case Parser.SOUND:
+          sounds.push(this.Sound(lines));
+          break;
+        case Parser.STRUCT:
+          structs.push(this.Struct(lines));
+          break;
+        default:
+          this.unitError(lines);
+          break;
+      }
+    }
+    return {
+      type: "Sprite",
+      name,
+      blockDefs,
+      triggerCalls,
+      forms,
+      sounds,
+      costumes,
+      structs,
+      comments,
+    };
   }
 
   isUnit(line) {
@@ -163,6 +227,20 @@ class Parser {
     if (!theLine.startsWith("unit ")) return false;
     if (!theLine.endsWith("[")) return false;
     // FIXME: punt on complex nesting syntax for now
+    return true;
+  }
+
+  isStage(line) {
+    const theLine = line.trim();
+    if (!theLine.startsWith("stage")) return false;
+    if (!theLine.endsWith("[")) return false;
+    return true;
+  }
+
+  isSprite(line) {
+    const theLine = line.trim();
+    if (!theLine.startsWith("sprite ")) return false;
+    if (!theLine.endsWith("[")) return false;
     return true;
   }
 
