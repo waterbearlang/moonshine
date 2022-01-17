@@ -4,14 +4,15 @@ const testdata = `unit Pong [
   ]
 ]`;
 
-import moonshine from "../moonshine.js";
+import Parser from "../moonshine.js";
 import assert from "assert";
 
+let parser = new Parser();
 let ast;
 
-describe("Unit", function () {
+describe("Moon Unit", function () {
   before(() => {
-    ast = moonshine.parse(testdata);
+    ast = parser.parse(testdata);
   });
   describe("parse", () => {
     it("unit should be found", () => assert.equal(ast.units.length, 1));

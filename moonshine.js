@@ -29,85 +29,160 @@
 // Currently BlockCall and ValueCall look identical, but differ in where they can appear
 // which should be fairly trivial to handle, but might have been tricky with Peggy
 
-let lineCount = 0;
-
-// Symbols for parser
-const WHITESPACE = Symbol.for("whitespace");
-const COMMENT = Symbol.for("comment");
-const UNIT = Symbol.for("unit");
-const PARSEERROR = Symbol.for("parseerror");
-
-// Regular expressions for parser
-// a name can start with any letter or underscore followed by any letter, number, punctuation, symbol, mark, emoji, mathematical symbol or the space character. It should *not* allow parentheses or brackets, but that is not implemented yet
-const letter = `\\p{L}`;
-const number = `\\p{N}`;
-const symbol = `\\p{S}`;
-const punctuation = `\\p{P}`;
-const name_part = `[${letter}_][${letter}${number}${punctuation}${symbol}_ ]*`
-const name_part_rx = new RegExp(name_part, 'u');
-
-function parseLines(lines) {
-  const comments = [];
-  const units = [];
-  while (lineCount < lines.length) {
-    switch (unitLineType(lines[lineCount])) {
-      case WHITESPACE:
-        lineCount++;
-        break;
-      case COMMENT:
-        comments.push(Comment(lines));
-        break;
-      case UNIT:
-        units.push(Unit(lines));
-        break;
-      default:
-        unitError(lines);
-        break;
-    }
+class Parser {
+  constructor() {
+    this.lineCount = 0;
   }
-  return { comments, units };
+
+  reset() {
+    this.lineCount = 0;
+  }
+
+  // Symbols for parser, constants on the Parser object
+  static get WHITESPACE() {
+    return Symbol.for("whitespace");
+  }
+  static get COMMENT() {
+    return Symbol.for("comment");
+  }
+  static get UNIT() {
+    return Symbol.for("unit");
+  }
+  static get SPRITE() {
+    return Symbol.for("sprite");
+  }
+  static get STAGE() {
+    return Symbol.for("stage");
+  }
+  static get LIBRARY() {
+    return Symbol.for("library");
+  }
+  static get PARSEERROR() {
+    return Symbol.for("parseerror");
+  }
+
+  parseLines(lines) {
+    const comments = [];
+    const units = [];
+    while (this.lineCount < lines.length) {
+      switch (this.unitLineType(lines[this.lineCount])) {
+        case Parser.WHITESPACE:
+          this.lineCount++;
+          break;
+        case Parser.COMMENT:
+          comments.push(this.Comment(lines));
+          break;
+        case Parser.UNIT:
+          units.push(this.Unit(lines));
+          break;
+        default:
+          this.unitError(lines);
+          break;
+      }
+    }
+    return { comments, units };
+  }
+
+  parse(text) {
+    return this.parseLines(text.split("\n"));
+  }
+
+  isWhitespace(line) {
+    return !line.trim();
+  }
+
+  isComment(line) {
+    const theLine = line.trim();
+    if (theLine.startsWith("//") || theLine.startsWith("/*")) return true;
+    return false;
+  }
+
+  isNumber(text) {
+    if (Number.isNaN(Number(text))) {
+      return false;
+    }
+    return true;
+  }
+
+  isName(text) {
+    // FIXME
+    return true;
+  }
+
+  Comment(lines) {
+    let theLine = lines[this.lineCount];
+    if (theLine.trim().startsWith("//")) {
+      return { type: "Comment", value: theLine.split("//")[1].trim() };
+    }
+    let commentLines = [];
+    theLine = theLine.trim().split("/*")[1].trim();
+    while (true) {
+      if (theLine.endsWith("*/")) {
+        theLine = theLine.split("*/")[0].trim();
+        commentLines.push(theLine);
+        break;
+      } else {
+        commentLines.push(theLine);
+      }
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+    }
+    return { type: "Comment", value: commentLines.join("\n") };
+  }
+
+  Unit(lines) {
+    // Get name and signature from first line
+    // Iterate through lines getting Comment, Stage, Library, Sprite
+    let theLine = lines[this.lineCount];
+    let name = /\s*unit\s+(?<name>.*)\[\s*/.exec(theLine).groups.name;
+    let sprites = [];
+    let stages = [];
+    let libraries = [];
+    let comments = [];
+    while (true) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine === "]") {
+        this.lineCount++;
+        break;
+      } else {
+        if (isComment(theLine)) {
+          comments.push(this.Comment(lines));
+        }
+        if (isSprite(theLine)) {
+          comments.push(this.Sprite(lines));
+        }
+      }
+    }
+    return { type: "Unit", name, args, expressions };
+  }
+
+  isUnit(line) {
+    // OK, this is going to get a bit complex
+    const theLine = line.trim();
+    if (!theLine.startsWith("unit ")) return false;
+    if (!theLine.endsWith("[")) return false;
+    // FIXME: punt on complex nesting syntax for now
+    return true;
+  }
+
+  unitLineType(line) {
+    if (this.isUnit(line)) return Parser.UNIT;
+    if (this.isWhitespace(line)) return Parser.WHITESPACE;
+    if (this.isComment(line)) return Parser.COMMENT;
+    if (this.isSprite(line)) return Parser.SPRITE;
+    if (this.isLibrary(line)) return Parser.LIBRARY;
+    if (this.isStage(line)) return Parser.STAGE;
+    return Parser.PARSEERROR;
+  }
+
+  unitError(lines) {
+    const err = `Error on line ${this.lineCount + 1}: "${
+      lines[this.lineCount]
+    }"`;
+    console.error(err);
+    throw new Error(err);
+  }
 }
 
-function parse(text) {
-  return parseLines(text.split("\n"));
-}
-
-function isWhitespace(line) {
-  return !!line.trim();
-}
-
-function isComment(line) {
-  const theLine = line.trim();
-  if (theLine.startsWith("//") || theLine.startsWith("/*")) return true;
-  return false;
-}
-
-function isNumber(text){
-  
-}
-
-function isName(text) {
-  if (name_part_rx.test(text){ return true; }
-  const parts = text.split(/[\(\)]/);
-
-}
-
-function isUnit(line) {
-  const theLine = line.trim();
-  // OK, this is going to get a bit complex
-}
-
-function unitLineType(line) {
-  if (isUnit(line)) return UNIT;
-  if (isWhitespace(line)) return WHITESPACE;
-  if (isComment(line)) return COMMENT;
-  return PARSEERROR;
-}
-
-function unitError(lines) {
-  const err = `Error on line ${lineCount + 1}: "${lines[lineCount]}"`;
-  console.error(err);
-  throw new Error(err);
-}
-
-export default { parse, isWhitespace, isComment, isUnit, isName };
+export default Parser;

@@ -44,12 +44,14 @@ const testdata = `unit Pong [
 
 let ast;
 
-import moonshine from "../moonshine.js";
+import Parser from "../moonshine.js";
 import assert from "assert";
 
-describe("Unit", function () {
+const parser = new Parser();
+
+describe("Sprite Ball Unit", function () {
   before(() => {
-    ast = moonshine.parse(testdata);
+    ast = parser.parse(testdata);
   });
   describe("parse", () => {
     it("unit should be found", () => ast.units.length === 1);
