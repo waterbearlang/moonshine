@@ -49,7 +49,7 @@ import assert from "assert";
 
 const parser = new Parser();
 
-describe("Sprite Ball Unit", function () {
+describe("Test a more full-featured unit", function () {
   before(() => {
     ast = parser.parse(testdata);
   });

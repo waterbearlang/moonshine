@@ -10,7 +10,7 @@ import assert from "assert";
 let parser = new Parser();
 let ast;
 
-describe("Moon Unit", function () {
+describe("Test a minimal unit", function () {
   before(() => {
     ast = parser.parse(testdata);
   });

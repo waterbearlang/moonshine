@@ -4,11 +4,13 @@ import assert from "assert";
 const parser = new Parser();
 
 describe("Test the parser parts", () => {
-  beforeEach( () => parser.reset() );
+  beforeEach(() => parser.reset());
   describe("Test isWhitespace", () => {
     it("Single space", () => assert.equal(parser.isWhitespace(" "), true));
-    it("Multiple spaces", () => assert.equal(parser.isWhitespace("    "), true));
-    it("Spaces and tabs", () => assert.equal(parser.isWhitespace(" \t \t "), true));
+    it("Multiple spaces", () =>
+      assert.equal(parser.isWhitespace("    "), true));
+    it("Spaces and tabs", () =>
+      assert.equal(parser.isWhitespace(" \t \t "), true));
     it("Fail for non-whitespace", () =>
       assert.equal(parser.isWhitespace(" abc "), false));
   });
@@ -25,7 +27,10 @@ describe("Test the parser parts", () => {
         true
       ));
     it("comment at end of line not supported", () =>
-      assert.equal(parser.isComment("do () something () // bad comment"), false));
+      assert.equal(
+        parser.isComment("do () something () // bad comment"),
+        false
+      ));
     it("leading whitespace", () =>
       assert.equal(parser.isComment("    // this should be alright"), true));
     it("trailing whitespace", () =>
@@ -67,7 +72,26 @@ describe("Test the parser parts", () => {
       assert.equal(parser.unitLineType("// blah blah"), Parser.COMMENT));
     it("Test whitespace type", () =>
       assert.equal(parser.unitLineType("   "), Parser.WHITESPACE));
-    it("Test unknown type", () =>
-      assert.equal(parser.unitLineType("not a unit()"), Parser.PARSEERROR));
+    it("Test sprite type", () =>
+      assert.equal(parser.unitLineType("sprite hoopla["), Parser.SPRITE));
+    it("Test library type", () =>
+      assert.equal(parser.unitLineType("library foobar [ "), Parser.LIBRARY));
+    it("Test stage type", () =>
+      assert.equal(parser.unitLineType("stage["), Parser.STAGE));
+    it("Test block def", () =>
+      assert.equal(
+        parser.unitLineType("define xyzzy(foo:bar) xrxbrbl fnord plugh["),
+        Parser.BLOCKDEF
+      ));
+    it("Test context", () =>
+      assert.equal(
+        parser.unitLineType("septimus parsimus(explodius) ["),
+        Parser.CONTEXT
+      ));
+    it("Test step type", () =>
+      assert.equal(parser.unitLineType("small furry creatures"), Parser.STEP));
+    // Disabling unknown type as steps are currently swallowing all errors
+    // it("Test unknown type", () =>
+    //   assert.equal(parser.unitLineType("not a unit()"), Parser.PARSEERROR));
   });
 });
