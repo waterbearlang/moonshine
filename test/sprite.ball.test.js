@@ -50,33 +50,70 @@ import assert from "assert";
 const parser = new Parser();
 
 describe("Test a more full-featured unit", function () {
-  before(function(){
+  before(function () {
     ast = parser.parse(testdata);
   });
-  describe("parse", function() {
-    it("unit should be found", function(){assert.equal(ast.units.length, 1)});
-    it("unit should not be null or undefined", function(){assert.ok(ast.units[0])});
-    it("unit should have type Unit", function(){
-      assert.equal(ast.units[0].type, "Unit")});
-    it("unit should be named Pong", function(){
-      assert.equal(ast.units[0].name, "Pong")});
-    it("unit should have a sprites array", function(){
-      assert.ok(ast.units[0].sprites)});
-    it("unit should have a stages array", function(){assert.ok(ast.units[0].stages)});
-    it("unit should have a libraries array", function(){
-      assert.ok(ast.units[0].libraries)});
-    it("unit should have a comments array", function(){
-      assert.ok(ast.units[0].comments)});
+  describe("parse", function () {
+    it("unit should be found", function () {
+      assert.equal(ast.units.length, 1);
+    });
+    it("unit should not be null or undefined", function () {
+      assert.ok(ast.units[0]);
+    });
+    it("unit should have type Unit", function () {
+      assert.equal(ast.units[0].type, "Unit");
+    });
+    it("unit should be named Pong", function () {
+      assert.equal(ast.units[0].name, "Pong");
+    });
+    it("unit should have a sprites array", function () {
+      assert.ok(ast.units[0].sprites);
+    });
+    it("unit should have a stages array", function () {
+      assert.ok(ast.units[0].stages);
+    });
+    it("unit should have a libraries array", function () {
+      assert.ok(ast.units[0].libraries);
+    });
+    it("unit should have a comments array", function () {
+      assert.ok(ast.units[0].comments);
+    });
   });
-  describe("sprite", function(){
+  describe("sprite", function () {
     let sprite;
-    it("there should be one sprite", function(){
+    it("there should be one sprite", function () {
       sprite = ast.units[0].sprites[0];
       assert.equal(ast.units[0].sprites.length, 1);
     });
-    it("sprite should not be null or undefined", function(){assert.ok(sprite)});
-    it("sprite should be named Ball", function(){assert.equal(sprite.name, "Ball")});
-    it("sprite should have type Sprite", function(){
-      assert.equal(sprite.type, "Sprite")});
+    it("sprite should not be null or undefined", function () {
+      assert.ok(sprite);
+    });
+    it("sprite should be named Ball", function () {
+      assert.equal(sprite.name, "Ball");
+    });
+    it("sprite should have type Sprite", function () {
+      assert.equal(sprite.type, "Sprite");
+    });
+    it("sprite should have a blockDefs array", function () {
+      assert.ok(sprite.blockDefs);
+    });
+    it("sprite should have a triggerCalls array", function () {
+      assert.ok(sprite.triggerCalls);
+    });
+    it("sprite should have a forms array", function () {
+      assert.ok(sprite.forms);
+    });
+    it("sprite should have a sounds array", function () {
+      assert.ok(sprite.sounds);
+    });
+    it("sprite should have a costumes array", function () {
+      assert.ok(sprite.costumes);
+    });
+    it("sprite should have a structs array", function () {
+      assert.ok(sprite.structs);
+    });
+    it("sprite should have a comments array", function () {
+      assert.ok(sprite.comments);
+    });
   });
 });
