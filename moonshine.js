@@ -158,8 +158,6 @@ class Parser {
     let theLine = lines[this.lineCount];
     let name = /\s*unit\s+(?<name>.*)\[\s*/.exec(theLine).groups.name.trim();
     let sprites = [];
-    let costumes = [];
-    let sounds = [];
     let stages = [];
     let libraries = [];
     let comments = [];
@@ -174,16 +172,6 @@ class Parser {
           break;
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
-          break;
-        case Parser.SOUNDS:
-          // We keep one array no matter how many blocks of Sounds are in the source file
-          // Currently we are throwing away comments from Sound blocks
-          sounds.push(...this.Sounds(lines).costumes);
-          break;
-        case Parser.COSTUMES:
-          // Like Sounds, we keep one array even if there is more than one block of costumes
-          // Currently we are throwing away comments from Costumes blocks
-          costumes.push(...this.Costumes(lines).costumes);
           break;
         case Parser.SPRITE:
           sprites.push(this.Sprite(lines));
@@ -203,8 +191,6 @@ class Parser {
       type: "Unit",
       name,
       sprites,
-      sounds,
-      costumes,
       stages,
       libraries,
       comments,
@@ -343,8 +329,15 @@ class Parser {
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
           break;
+        case Parser.SOUNDS:
+          // We keep one array no matter how many blocks of Sounds are in the source file
+          // Currently we are throwing away comments from Sound blocks
+          sounds.push(...this.Sounds(lines).sounds);
+          break;
         case Parser.COSTUMES:
-          costumes.push(this.Costumes(lines));
+          // Like Sounds, we keep one array even if there is more than one block of costumes
+          // Currently we are throwing away comments from Costumes blocks
+          costumes.push(...this.Costumes(lines).costumes);
           break;
         case Parser.TRIGGERCALL:
           triggerCalls.push(this.TriggerCall(lines));
