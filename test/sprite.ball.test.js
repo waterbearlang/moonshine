@@ -96,24 +96,31 @@ describe("Test a more full-featured unit", function () {
     });
     it("sprite should have a blockDefs array", function () {
       assert.ok(sprite.blockDefs);
+      assert.equal(sprite.blockDefs.length, 2);
     });
     it("sprite should have a triggerCalls array", function () {
       assert.ok(sprite.triggerCalls);
+      assert.equal(sprite.triggerCalls.length, 3);
     });
     it("sprite should have a forms array", function () {
       assert.ok(sprite.forms);
+      assert.equal(sprite.forms.length, 0);
     });
     it("sprite should have a sounds array", function () {
       assert.ok(sprite.sounds);
+      assert.equal(sprite.sounds.length, 0);
     });
     it("sprite should have a costumes array", function () {
       assert.ok(sprite.costumes);
+      assert.equal(sprite.costumes.length, 0);
     });
     it("sprite should have a structs array", function () {
       assert.ok(sprite.structs);
+      assert.equal(sprite.structs.length, 0);
     });
     it("sprite should have a comments array", function () {
       assert.ok(sprite.comments);
+      assert.equal(sprite.comments.length, 0);
     });
   });
 });
