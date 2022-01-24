@@ -97,7 +97,7 @@ class Parser {
           units.push(this.Unit(lines));
           break;
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized line in file");
           break;
       }
       this.lineCount++;
@@ -128,6 +128,9 @@ class Parser {
 
   isName(text) {
     // FIXME
+    if (isNumber(text)) {
+      return false;
+    }
     return true;
   }
 
@@ -150,6 +153,147 @@ class Parser {
       theLine = lines[this.lineCount].trim();
     }
     return { type: "Comment", value: commentLines.join("\n") };
+  }
+
+  // A name with optional parameters, used for value, step, and context blocks
+  NameDef(text) {
+    let current = [];
+    let parts = [];
+    let params = [];
+    let index = 0;
+    let value = null;
+    while (index < text.length) {
+      if (text[index] === "[") {
+        this.nameError(text, index, "illegal open bracket");
+      } else if (text[index] === "(") {
+        parts.push(current.join(""));
+        current.length = 0;
+        ({ index, value } = this.Parameter(text, index + 1));
+        params.push(value);
+        value = null;
+      } else if (text[index] === ")") {
+        this.nameError(text, index, "illegal close parens");
+      } else {
+        current.push(text[index]);
+        index++;
+      }
+    }
+    parts.push(current.join(""));
+    return { name: parts.join("()").trim(), params };
+  }
+
+  NameCall(text) {
+    let parts = [];
+    let current = [];
+    let args = [];
+    let index = 0;
+    let arg = null;
+    // A name is any text, optionally containing embedded expressions
+    if (text.trim().length === 0) {
+      this.nameError(text, 0, "a name cannot be empty or only whitespace");
+    }
+    if (this.isNumber(text)) {
+      this.nameError(text, 0, "a number cannot be used as a name");
+    }
+    while (index < text.length) {
+      if (text[index] === "(") {
+        parts.push(current.join(""));
+        current.length = 0;
+        ({ index, arg } = this.Expression(text, index));
+        args.push(arg);
+        arg = null;
+      } else if (text[index] === "[") {
+        this.nameError(text, index, "illegal open bracket");
+      } else if (text[index] === ")") {
+        this.nameError(text, index, "illegal close parens");
+      } else {
+        current.push(text[index]);
+        index++;
+      }
+    }
+    parts.push(current.join(""));
+    return { name: parts.join("()"), args };
+  }
+
+  Expression(text, index) {
+    // An expression can be: a simple name, a number, or a name with arguments, where
+    // the arguments themselves can be expressions
+    // An expression is always surrounded by parentheses
+    let parts = [];
+    let current = [];
+    let args = [];
+    let arg = null;
+    if (text[index] === "(") {
+      index++;
+    } else {
+      this.nameError(text, index, 'an expression must begin with "("');
+    }
+    while (index < text.length) {
+      if (text[index] === ")") {
+        index++;
+        parts.push(current.join(""));
+        if (parts.length === 1 && this.isNumber(parts[0])) {
+          return {
+            index,
+            arg: {
+              type: "Number",
+              value: Number(parts[0]),
+            },
+          };
+          // FIXME: Allow string and other types here
+        } else {
+          return {
+            index,
+            arg: {
+              type: "BlockCall",
+              value: { name: parts.join("()"), args },
+            },
+          };
+        }
+      } else if (text[index] === "(") {
+        parts.push(current.join(""));
+        current.length = 0;
+        ({ index, arg } = this.Expression(text, index));
+        args.push(arg);
+        arg = null;
+      } else if (text[index] === "[") {
+        this.nameError(text, index, "illegal open bracket");
+      } else {
+        current.push(text[index]);
+        index++;
+      }
+    }
+    // should not get here
+    this.nameError(text, index, "missing close parens");
+  }
+
+  Parameter(text, index) {
+    let name = [];
+    let type = [];
+    let isName = true;
+    while (index < text.length) {
+      if (text[index] === "(") {
+        this.nameError(text, index, "illegal open parens");
+      } else if (text[index] === "[") {
+        this.nameError(text, index, "illegal open bracket");
+      } else if (text[index] === ":") {
+        isName = false;
+        index++;
+      } else if (text[index] === ")") {
+        return {
+          index: index + 1,
+          value: { name: name.join(""), type: type.join("") },
+        };
+      } else {
+        if (isName) {
+          name.push(text[index]);
+        } else {
+          type.push(text[index]);
+        }
+        index++;
+      }
+    }
+    this.nameError(text, index, "missing close parens");
   }
 
   Unit(lines) {
@@ -183,7 +327,7 @@ class Parser {
           libraries.push(this.Library(lines));
           break;
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized unit child type");
           break;
       }
     }
@@ -200,8 +344,12 @@ class Parser {
   BlockDef(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
+    // Currently can only define a Step block, need to change that
     let theLine = lines[this.lineCount];
-    let name = /\s*define\s+(?<name>.*)\[\s*/.exec(theLine).groups.name.trim();
+    let nameStr = /\s*define\s+(?<name>.*)\[\s*/
+      .exec(theLine)
+      .groups.name.trim();
+    let { name, params } = this.NameDef(nameStr);
     let steps = [];
     let comments = [];
     while (this.lineCount < lines.length - 1) {
@@ -223,11 +371,11 @@ class Parser {
           steps.push(this.Step(lines));
           break;
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized BlockDef child type");
           break;
       }
     }
-    return { type: "BlockDef", name, steps, comments };
+    return { type: "BlockDef", name, params, steps, comments };
   }
 
   TriggerCall(lines) {
@@ -256,7 +404,7 @@ class Parser {
           steps.push(this.Step(lines));
           break;
         default:
-          this.unitError(lines);
+          this.unitError(lines, "Unrecognized TriggerCall child type");
           break;
       }
     }
@@ -268,8 +416,8 @@ class Parser {
     // FIXME: Currently punting on parsing out the name and arguments
     // Iterate through lines getting Comment, Steps
     let theLine = lines[this.lineCount];
-    let name = theLine.trim().slice(0, -1).trim(); // remove trailing "["
-    let args = []; // these will be extracted from name
+    let nameStr = theLine.trim().slice(0, -1).trim(); // remove trailing "["
+    let { name, args } = this.NameCall(nameStr);
     let comments = [];
     let steps = [];
     while (this.lineCount < lines.length - 1) {
@@ -291,7 +439,7 @@ class Parser {
           steps.push(this.Step(lines));
           break;
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized Context child type");
           break;
       }
     }
@@ -302,8 +450,8 @@ class Parser {
     // Get name from first line
     // FIXME: Currently punting on parsing out the name and arguments
     let theLine = lines[this.lineCount];
-    let name = theLine.trim().slice(0, -1).trim(); // remove trailing "["
-    let args = []; // these will be extracted from name
+    let nameStr = theLine.trim();
+    let { name, args } = this.NameCall(nameStr);
     return { type: "Step", name, args };
   }
 
@@ -355,7 +503,7 @@ class Parser {
           blockDefs.push(this.BlockDef(lines));
           break;
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized Sprite child type");
           break;
       }
     }
@@ -391,7 +539,7 @@ class Parser {
           break;
         // FIXME: Does not actually support sounds yet
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized Sounds child type");
           break;
       }
     }
@@ -423,7 +571,7 @@ class Parser {
           break;
         // FIXME: Does not actually support costumes yet
         default:
-          this.unitError(lines);
+          this.unitError(lines, "unrecognized Costumes child type");
           break;
       }
     }
@@ -519,8 +667,18 @@ class Parser {
     return Parser.PARSEERROR;
   }
 
-  unitError(lines) {
-    const err = `Error on line ${this.lineCount + 1}: "${
+  nameError(text, index, msg) {
+    const pointer = Array(index + 1).fill(" ");
+    pointer.push("^");
+    const err = `Name error ${msg} at index ${index}:\n"${text}"\n${pointer.join(
+      ""
+    )}`;
+    console.error(err);
+    throw new Error(err);
+  }
+
+  unitError(lines, msg) {
+    const err = `Error ${msg} on line ${this.lineCount + 1}: "${
       lines[this.lineCount]
     }"`;
     console.error(err);

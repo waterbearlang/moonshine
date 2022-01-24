@@ -30,6 +30,11 @@ const testdata = `unit Pong [
       set (Game Over) to (0)
     ]
 
+    define Start at x (x:Number) y (y:Number)[
+      go to x: (x) y: (y)
+      turn to (90)
+    ]
+
     when I receive (Bounce)[
       turn ↻ (((Bounce Direction) - (direction)) * 2) degrees
       move (speed) steps
@@ -96,11 +101,77 @@ describe("Test a more full-featured unit", function () {
     });
     it("sprite should have a blockDefs array", function () {
       assert.ok(sprite.blockDefs);
-      assert.equal(sprite.blockDefs.length, 2);
+    });
+    it("sprite should have 3 blockDefs", function () {
+      assert.equal(sprite.blockDefs.length, 3);
+    });
+    it("sprite blockDefs should have correct type and name", function () {
+      assert.equal(sprite.blockDefs[2].name, "Start at x () y ()");
+      assert.equal(sprite.blockDefs[2].type, "BlockDef");
+    });
+    it("sprite blockDefs should have 2 parameters with names and types", function () {
+      assert.ok(sprite.blockDefs[2].params);
+      assert.equal(sprite.blockDefs[2].params.length, 2);
+      assert.equal(sprite.blockDefs[2].params[0].type, "Number");
+      assert.equal(sprite.blockDefs[2].params[0].name, "x");
     });
     it("sprite should have a triggerCalls array", function () {
       assert.ok(sprite.triggerCalls);
+    });
+    it("sprite should have 3 triggerCalls", function () {
       assert.equal(sprite.triggerCalls.length, 3);
+    });
+    it("first sprite trigger should match name and type", function () {
+      assert.equal(sprite.triggerCalls[0].name, "🏁 clicked");
+      assert.equal(sprite.triggerCalls[0].type, "TriggerCall");
+    });
+    it("trigger should have steps and comments", function () {
+      assert.ok(sprite.triggerCalls[0].steps);
+      assert.ok(sprite.triggerCalls[0].comments);
+    });
+    it("Trigger should have 3 steps", function () {
+      assert.equal(sprite.triggerCalls[0].steps.length, 3);
+    });
+    it("Trigger's 3rd step should have matching name", function () {
+      assert.equal(sprite.triggerCalls[0].steps[2].name, "repeat until ()");
+    });
+    it("Trigger's 3rd step should have 1 argument", function () {
+      assert.ok(sprite.triggerCalls[0].steps[2].args);
+      assert.equal(sprite.triggerCalls[0].steps[2].args.length, 1);
+    });
+    it("argument should have matching type and name", function () {
+      assert.equal(sprite.triggerCalls[0].steps[2].args[0].type, "BlockCall");
+      assert.equal(
+        sprite.triggerCalls[0].steps[2].args[0].value.name,
+        "() = ()"
+      );
+    });
+    it("argument should have 2 arguments of its own", function () {
+      assert.ok(sprite.triggerCalls[0].steps[2].args[0].value.args);
+      assert.equal(
+        sprite.triggerCalls[0].steps[2].args[0].value.args.length,
+        2
+      );
+    });
+    it("first child argument should have matching type and value", function () {
+      assert.equal(
+        sprite.triggerCalls[0].steps[2].args[0].value.args[0].type,
+        "BlockCall"
+      );
+      assert.equal(
+        sprite.triggerCalls[0].steps[2].args[0].value.args[0].value.name,
+        "Game Over"
+      );
+    });
+    it("second child argument should have matching type and value", function () {
+      assert.equal(
+        sprite.triggerCalls[0].steps[2].args[0].value.args[1].type,
+        "Number"
+      );
+      assert.equal(
+        sprite.triggerCalls[0].steps[2].args[0].value.args[1].value,
+        1
+      );
     });
     it("sprite should have a forms array", function () {
       assert.ok(sprite.forms);
