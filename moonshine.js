@@ -168,7 +168,7 @@ class Parser {
       } else if (text[index] === "(") {
         parts.push(current.join(""));
         current.length = 0;
-        ({ index, value } = this.Parameter(text, index + 1));
+        ({ index, value } = this.Parameter(text, index));
         params.push(value);
         value = null;
       } else if (text[index] === ")") {
@@ -213,6 +213,26 @@ class Parser {
     }
     parts.push(current.join(""));
     return { name: parts.join("()"), args };
+  }
+
+  SimpleName(text) {
+    if (!text) {
+      this.nameError(text, 0, "Name cannot be undefined, null, or empty");
+    }
+    if (typeof text !== "string") {
+      this.nameError(text, 0, "Name must be a string");
+    }
+    if (this.isWhitespace(text)) {
+      this.nameError(text, 0, "Name cannot be only whitespace");
+    }
+    if (/[\(\)\[\]\:]/g.test(text)) {
+      this.nameError(
+        text,
+        0,
+        "Name cannot contain square brackets, parentheses, or colon"
+      );
+    }
+    return text.trim();
   }
 
   Expression(text, index) {
@@ -267,10 +287,25 @@ class Parser {
     this.nameError(text, index, "missing close parens");
   }
 
+  Returns(text) {
+    // a return value is a typed name, like a parameter
+    try {
+      let [_, name, type] = /returns (.+):(.+)/.exec(text);
+      return { name: this.SimpleName(name), type: this.SimpleName(type) };
+    } catch (e) {
+      this.nameError(text, 0, "problem parsing returns for block definition");
+    }
+  }
+
   Parameter(text, index) {
     let name = [];
     let type = [];
     let isName = true;
+    if (text[index] === "(") {
+      index++;
+    } else {
+      this.nameError(text, index, 'a parameter must begin with "("');
+    }
     while (index < text.length) {
       if (text[index] === "(") {
         this.nameError(text, index, "illegal open parens");
@@ -352,10 +387,12 @@ class Parser {
     let { name, params } = this.NameDef(nameStr);
     let steps = [];
     let comments = [];
+    let returns = null;
     while (this.lineCount < lines.length - 1) {
       this.lineCount++;
       theLine = lines[this.lineCount].trim();
-      if (theLine === "]") {
+      if (theLine.startsWith("]")) {
+        returns = this.Returns(theLine.slice(1).trim());
         break;
       }
       switch (this.unitLineType(theLine)) {
@@ -375,7 +412,7 @@ class Parser {
           break;
       }
     }
-    return { type: "BlockDef", name, params, steps, comments };
+    return { type: "BlockDef", name, params, steps, returns, comments };
   }
 
   TriggerCall(lines) {
