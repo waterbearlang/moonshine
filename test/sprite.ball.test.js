@@ -21,19 +21,19 @@ const testdata = `unit Pong [
       go to x: (0) y: (-45)
       point in direction (pick random (1) to (360))
       wait (0.5) seconds
-    ]
+    ] returns this:Sprite
 
     define Initialize [
       hide variable (Winner)
       set speed to (5)
       show
       set (Game Over) to (0)
-    ]
+    ] returns this:Sprite
 
     define Start at x (x:Number) y (y:Number)[
       go to x: (x) y: (y)
       turn to (90)
-    ]
+    ] returns this:Sprite
 
     when I receive (Bounce)[
       turn ↻ (((Bounce Direction) - (direction)) * 2) degrees
@@ -105,15 +105,21 @@ describe("Test a more full-featured unit", function () {
     it("sprite should have 3 blockDefs", function () {
       assert.equal(sprite.blockDefs.length, 3);
     });
-    it("sprite blockDefs should have correct type and name", function () {
+    it("sprite blockDef should have correct type and name", function () {
       assert.equal(sprite.blockDefs[2].name, "Start at x () y ()");
       assert.equal(sprite.blockDefs[2].type, "BlockDef");
     });
-    it("sprite blockDefs should have 2 parameters with names and types", function () {
+    it("sprite blockDef should have 2 parameters with names and types", function () {
       assert.ok(sprite.blockDefs[2].params);
       assert.equal(sprite.blockDefs[2].params.length, 2);
       assert.equal(sprite.blockDefs[2].params[0].type, "Number");
       assert.equal(sprite.blockDefs[2].params[0].name, "x");
+    });
+    it("sprite blockDef should have a returns with name and type", function () {
+      assert.ok(sprite.blockDefs[2].returns);
+      console.log(JSON.stringify(sprite.blockDefs[2].returns));
+      assert.equal(sprite.blockDefs[2].returns.name, "this");
+      assert.equal(sprite.blockDefs[2].returns.type, "Sprite");
     });
     it("sprite should have a triggerCalls array", function () {
       assert.ok(sprite.triggerCalls);
