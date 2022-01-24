@@ -1,7 +1,5 @@
 # TODO for Moonshine
 
-Docs for peg.js: https://pegjs.org/documentation#installation-node-js
-
 ## Extending the Moonshine Language
 
 - [ ] Parse literal sets
@@ -32,4 +30,4 @@ Docs for peg.js: https://pegjs.org/documentation#installation-node-js
 
 - [ ] Once the script is parsed, the parse tree is the source of all truth, as an immutable structure.
 - [ ] Blocks are built from parse tree
-- [ ] "Text" view is really just different custom elements being driving by the parse tree
+- [ ] "Text" view is really just different custom elements being driven by the parse tree

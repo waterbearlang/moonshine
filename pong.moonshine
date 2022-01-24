@@ -1,0 +1,92 @@
+unit Pong [
+  sprite Ball [
+
+    costumes [
+      // Not supported yet
+    ]
+
+    sounds [
+      // Not supported yet
+    ]
+
+    when 🏁 clicked [
+      Initialize
+      Reset
+      repeat until (Game Over = 1)[
+        move (speed) steps
+      ]
+    ]
+
+    define Reset [
+      goto x: (0) y: (-45)
+      point in direction (pick random (1) to (360))
+      wait (0.5) seconds
+    ]
+
+    define Initialize [
+      hide variable (Winner)
+      set speed to (5)
+      show
+      set (Game Over) to (0)
+    ]
+
+    when I receive (Bounce)[
+      turn ↻ (((Bounce Direction) - (direction)) * 2) degrees
+      move (speed) steps
+    ]
+
+    when I receive (Score Player)[
+      change (speed) by (0.5)
+      Reset
+    ]
+  ]
+
+  sprite Paddle[
+
+    costumes [
+      ...
+    ]
+
+    sounds [
+      ...
+    ]
+
+    define struct Paddle Player[
+      color: Color
+      position: Vector2
+      direction: Integer
+      control: Block
+    ]
+
+    define Create Paddle (player)[
+      set (control) to (player.control)
+      insert (true) at (player.index) of (Current Players)
+      switch costume to (player.color + " " + 3)
+      go to position (player.position)
+      point in direction (player.direction)
+      create clone of (myself)
+    ]
+
+    when 🏁 clicked[
+      set (Players) to (5)
+      set (max_move) to (70)
+      set (lives) to (3)
+      set (moved) to (0)
+      delete all of (Current Players)
+      hide
+      Create Paddle(Paddle Player
+        index: (1)
+        color: (red)
+        position: Vector2 x: (0) y: (-169)
+        direction: Vector2 direction: (random) magnitude: (1)
+        control: Human Control
+      )
+      Create Paddle(Paddle Player
+        index: (2)
+        color: (orange)
+        position: Vector2 x: (0) y: (-169)
+        direction: Vector2 direction: (random) magnitude: (1)
+        control: Simple Move Control
+      )
+      Create Paddle(Paddle Player
+

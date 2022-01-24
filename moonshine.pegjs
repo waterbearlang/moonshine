@@ -3,37 +3,128 @@
 //
 // Accepts Namespaced, typed Steps and constants
 
-Namespace
-  = name:Name _ "{" _ values:Blocks _ "}" _ {return {name, type: 'Namespace', values}}
+// Library of useful rules
 
-Blocks
-  = fns:(Block _ / (Comment _))+ { return fns.map(a => a[0]) }
+_ "optional whitespace"
+  = [ \t\n\r]* {return undefined}
 
-Name 
-  = name:([a-zA-Z][_a-zA-Z]*) { name[1].unshift(name[0]); return name[1].join("") }
+__ "mandatory whitespace"
+  = [ \t]+ {return undefined}
 
-Block
-  = Trigger / Context / Step / Value
+WS "just space"
+  = [ \t]*
+
+NL "new line"
+  = WS [\r\n]+ {return undefined}
+
+d "digit"
+  = [0-9]
+
+D "not digit"
+  = [^0-9]
+
+w "alphanumeric"
+  = [A-Za-z0-9_]
+
+W "not alphanumeric"
+  = [^A-Za-z0-9_]
+
+s "single whitespace"
+  = [ \f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+S "not whitespace"
+  = [^ \f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+X "neither digit nor whitespace nor structure characters"
+  = [^ 0-9\[\]\(\)\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+x "not non-space whitespace nor structure characters"
+  = [^\[\]\(\)\f\n\r\t\v\u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]
+
+t "horizontal tab"
+  = [\t]
+
+r "carriage return"
+  = [\r]
+
+n "newline"
+  = [\n]
+
+v "vertical tab"
+  = [\v]
+
+f "form feed"
+  = [\f]
+
+
+// Unit is the starting point for a Moonshine script
+
+Unit
+  = "unit" __ name:Name _ "[" _ values:Things _ "]" _ {console.log(name); return {name, type: 'Unit', values}}
+
+Comment "comment"
+  = _ "//" _ value:([^\n]+) _ { console.log(`comment: ${value.join('')}`); return {type: 'Comment', name: "comment", value: value.join('')}}
+  / _ "/\*" _ value:(.+) _ "\*/" _ {console.log(`comment: ${value.join()}`); return {type: 'Comment', name: "comment", value: value.join('')}}
+
+Stage
+  = "stage" _ "[" _ values:Properties _ "]" _ {console.log("stage"); return {name: 'Stage', type: 'Stage', values}}
+
+Library
+  = "library" _ "[" _ values:Properties _ "]" _ {console.log("library"); return {name: 'Library', type: 'Library', values}}
+
+Sprite
+  = _ "sprite" __ name:Name _ "[" _ values:Properties _ "]" _ {console.log(`sprite ${name}`); return {name, type: 'Sprite', values}}
+
+Things // later will include non-visible objects as well
+  = ( Comment / Stage / Library / Sprite )+
+
+// As further properties are defined, add them here
+Properties
+  = (Comment / BlockDef / TriggerCall / Form / Sounds / Costumes / Struct )+
+
+Sounds
+  = _ "sounds" _ "[" _ (Comment / Sound)+ _ "]"
+
+Costumes
+  = _ "costumes" _ "[" _ (Comment / Costume)+ _ "]"
+
+Sound
+  = "not defined"
+
+Costume
+  = "not defined"
+
+Struct
+  = "define struct" __ Name _ "[" (Comment / KeyValue)+ "]"
+
+Name "name"
+  = _ name:( X x*) { name[1].unshift(name[0]); console.log( `name: "${name[1].join("")}"`); return name[1].join("").trim() }
+
+BlockDef "blockdef"
+  = StepDef / ContextDef / ValueDef
+
+Form
+  = _ name:Name "[" _ values:KeyValueList _ "]" _ {return {name, type:'Form', values}}
 
 TypedList
-  = name:Name "[]" {return name + "List"}
+  = _ name:Name "[]" {return name + "List"}
 
 ConstrainedTypedList
-  = name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
+  = _ name:Name "[" _ len:Integer "]" {return name + "List/" + len.value}
 
 Type
   = ConstrainedTypedList
   / TypedList
   / Name
 
-NamedReturnType
+NamedReturnType "named return type"
   = name:Name _ ":" _ type:Type _ '"' returnName:Name '"' {return {name, type, returnName}}
 
 NamedReturnUntyped
   = name:Name _ '"' returnName:Name '"' {return {name, type:null, returnName}}
-  
+
 TypedName
-  = name:Name _ ":" _ type:Type {return {name,type, returnName:name}}
+  = name:Name _ ":" _ type:Type {return {name, type, returnName:name}}
 
 StepName
   = NamedReturnType / TypedName
@@ -41,20 +132,57 @@ StepName
 CommaSep
   = _ "," _
 
+DefSignature
+  = DefSig3
+  / DefSig2
+  / DefSig1
+  / DefSig0
+
+DefSig3 "defsig3"
+  = _ "define" _ na:Name? _ "(" pa:TypedName ")" _ nb:Name? _ "(" pb:TypedName ")" _ nc:Name? _ "(" pc:TypedName ")" _ nd:Name? _ {console.log("defsig3"); return { nameParts: [na,nb,nc,nd], name:[na,nb,nc,nd].join('()'), params: [pa,pb,pc] }}
+
+DefSig2 "defsig2"
+  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? "(" pb:TypedName ")" nc:Name? {console.log("defsig2"); return { nameParts: [na,nb,nc], name:[na,nb,nc].join('()'), params: [pa,pb] }}
+
+DefSig1 "defsig1"
+  = _ "define" _ na:Name? "(" pa:TypedName ")" nb:Name? {console.log("defsig1"); return { nameParts: [na,nb], name: [na,nb].join('()'), params: [pa] }}
+
+DefSig0 "defsig0"
+  = _ "define" _ na:Name {console.log("defsig0"); return { nameParts: [na], name:na, params: [] }}
+
+
+CallSignature
+  = CallSig3
+  / CallSig2
+  / CallSig1
+  / CallSig0
+
+CallSig3 "callsig3"
+  = _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? "(" ac:Argument ")" nd:Name? {return { nameParts:[na,nb,nc,nd], name:[na,nb,nc,nd].join('()'), args:[aa, ab, ac] }}
+
+CallSig2 "callsig2"
+  = _ na:Name? "(" aa:Argument ")" nb:Name? "(" ab:Argument ")" nc:Name? {return { nameParts: [na,nb,nc], name:[na,nb,nc].join('()'), args:[aa, ab] }}
+
+CallSig1 "callsig1"
+  = _ na:Name? "(" aa:Argument ")" nb:Name? {return { nameParts:[na,nb], name:[na,nb].join('()'), args:[aa] }}
+
+CallSig0 "callsig0"
+  = _ na:Name {return { nameParts:[na], name:na, args:[] }}
+
 Parameters
   = "(" _ ")" {return [] }
   / "(" _ a:TypedName _ ")" { return [a] }
   / "(" _ a:TypedName CommaSep b:TypedName ")" {return [a,b]}
   / "(" _ a:TypedName CommaSep b:TypedName CommaSep c:TypedName ")" { return [a,b,c] }
-  
+
 Arguments
   = "(" _ ")" { return [] }
   / "(" _ a:Argument _ ")" { return [a] }
   / "(" _ a:Argument CommaSep b:Argument _ ")" { return [a,b] }
   / "(" _ a:Argument CommaSep b:Argument CommaSep c:Argument _ ")" {return [a, b, c]}
- 
+
 Argument
-  = StepCall
+  = ValueCall
   / ValueArg
   / Name
 
@@ -79,20 +207,20 @@ LiteralValue
   / Text
   / List
   / Dict
-  
+
 Number
   = Float
   / Integer
-  
+
 Float
   = [0-9]* "." [0-9]+ {return {type: 'Float', value: parseFloat(text())}}
-  
+
 Integer
   = [0-9]+ {return {type: 'Integer', value: parseInt(text(), 10)}}
-  
+
 Truth
   = "true" / "false" {return {type: 'Truth', value: text()==='true'}}
-  
+
 Text
   = '"' .* '"' { return {type: 'Text', value: text()} }
   / "'" .* "'" { return {type: 'Text', value: text()} }
@@ -102,70 +230,76 @@ ValueList
 
 List
   = "[" list:ValueList "]" { return {type: 'List', value: list} }
-  
-Dict = "{" list:KeyValueList "}" { return {type: 'Dict', value: list} }
+
+Dict
+  = "{" list:KeyValueList "}" { return {type: 'Dict', value: list} }
 
 KeyValue
-  = key:Name _ ":" _ value:Value { return {key, value} }
-  
+  = key:Name _ ":" _ value:ValueCall { return {key, value} }
+
 KeyValueList
   = (vals:KeyValue val:CommaSep)* KeyValue {let l = vals.map(a => a[0]); l.push(val); return l}
-  
-StepSignature
-  = name:StepName _ params:Parameters {return {name, params}}
- 
+
+// StepSignature
+//   = _ "define" __ sig:DefSignature {return {name: "define " + sig:name.join('()'), params:sig.params}}
+
 StepBody
   = "{" _ exprs:Expression+ _ "}" {return exprs }
 
 LocalsBody
-  = "{" _ "locals" _ "{" _ locals:Value+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}}
+  = "{" _ "locals" _ "{" _ locals:ValueCall+ _ "}" _ exprs:Expression+ _ "}" {return {locals, exprs}}
 
 ValueBody
   = "<=" _ expr:Expression  { return expr }
-  
-Step
- = sig:StepSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
 
-ContextSignature
-   = "context" __ name:Name _ params:Parameters {return {name, params}}
+StepDef
+ = sig:DefSignature _ body:StepBody { return {type: 'Step', name: sig.name.name, returnType: sig.name.type, returnName: sig.name.returnName || sig.name.name, params: sig.params, body}}
+
+// ContextSignature
+//    = _ "define" __ sig:DefSignature {return {name: "define " + sig.name.join('()', sig.params}}
 
 ContextBody
    = LocalsBody
    / StepBody
 
-Context
-  = sig:ContextSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
+ContextDef
+  = sig:DefSignature _ body:ContextBody {return {type: 'Context', name: sig.name, params: sig.params, locals: body.locals || [], body: body.exprs || body}}
 
 TriggerSignature
-  = "trigger" __ name:Name _ "(" _ ")" {return {name}}
+  = _ "define" __ "when" __ name:Name {return {name: 'when ' + name}}
 
-Trigger
-  = sig:TriggerSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
+TriggerDef
+  = _ sig:DefSignature _ body:ContextBody {return {type: 'Trigger', name: sig.name, locals: body.locals || [], body: body.exprs || body}}
 
-Value
+ValueDef
   = sig:TypedName _ body:ValueBody _ ";" _ {return {type: 'Value', name: sig.name, returnType: sig.type, value: body}}
- 
+
 Expression
   = Comment
   / StepCall
+  / ContextCall
+  / ValueCall
   / Argument
 
-Comment
-  = "//" _ value:([^\n]*) _ { return {type: 'Comment', value: value.join('')}}
-  / "/*" _ value:(.*) _ "*/" { return {type: 'Comment', value: value.join('')}}
+FlexibleName
+  = NamespacedName / UnnamespacedName
+
+UnnamespacedName
+  = name:Name {return {namespace:null, name}}
+
+NamespacedName
+  = namespace:Name "." name:Name {return {namespace, name}}
 
 StepCall
-  = namespace:Name "." name:Name args:Arguments _ {return {type: 'StepCall', namespace, name, args}}
-  
-_ "whitespace"
-  = [ \t\n\r]* {return undefined}
+  = _ cs:CallSignature _ {return {type: 'StepCall', name:cs.name, args:cs.args, exprs:null}}
 
-__ "mandatory whitespace"
-  = [ \t]+ {return undefined}
+TriggerCall
+  = _ "when" __ name:Name _ "[" _ exprs:Expression+ _ "]" _ {return {type: "TriggerCall", name, args:null, exprs}}
 
-WS "just space"
-  = [ \t]*
+ContextCall
+  = _ cs:CallSignature _ "[" _ exprs:Expression+ _ "]" _ {return {type: 'ContextCall', name: cs.name, args:cs.args, exprs}}
 
-NL "new line"
-  = WS [\r\n]+ {return undefined}
+ValueCall
+  = _ cs:CallSignature _ {return {type: "ValueCall", name:cs.name, args:cs.args, exprs:null}}
+
 
