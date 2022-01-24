@@ -413,7 +413,6 @@ class Parser {
 
   Context(lines) {
     // Get name from first line
-    // FIXME: Currently punting on parsing out the name and arguments
     // Iterate through lines getting Comment, Steps
     let theLine = lines[this.lineCount];
     let nameStr = theLine.trim().slice(0, -1).trim(); // remove trailing "["
@@ -448,7 +447,6 @@ class Parser {
 
   Step(lines) {
     // Get name from first line
-    // FIXME: Currently punting on parsing out the name and arguments
     let theLine = lines[this.lineCount];
     let nameStr = theLine.trim();
     let { name, args } = this.NameCall(nameStr);
@@ -587,7 +585,6 @@ class Parser {
     const theLine = line.trim();
     if (!theLine.startsWith("unit ")) return false;
     if (!theLine.endsWith("[")) return false;
-    // FIXME: punt on complex nesting syntax for now
     return true;
   }
 
