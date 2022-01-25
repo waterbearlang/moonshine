@@ -388,6 +388,12 @@ class Parser {
     // FIXME: Implement this
   }
 
+  ContextDef(lines){
+  }
+
+  TriggerDef(lines){
+  }
+
   BlockDef(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
@@ -459,6 +465,7 @@ class Parser {
     return { type: "TriggerCall", name, steps, comments };
   }
 
+  // FIXME: Rename to ContextCall
   Context(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
@@ -493,6 +500,7 @@ class Parser {
     return { type: "Context", name, args, steps, comments };
   }
 
+  // FIXME: Rename to StepCall
   Step(lines) {
     // Get name from first line
     let theLine = lines[this.lineCount];
