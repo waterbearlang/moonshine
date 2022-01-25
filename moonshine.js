@@ -66,6 +66,12 @@ class Parser {
   static get BLOCKDEF() {
     return Symbol.for("blockdef");
   }
+  static get CONTEXTDEF() {
+    return Symbol.for("contextdef");
+  }
+  static get TRIGGERDEF(){
+    return Symbol.for("triggerdef");
+  }
   static get TRIGGERCALL() {
     return Symbol.for("triggercall");
   }
@@ -376,10 +382,15 @@ class Parser {
     };
   }
 
+  Library(lines){
+    // A library has a name and a colour
+    let theLine = lines[this.lineCount];
+    // FIXME: Implement this
+  }
+
   BlockDef(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
-    // Currently can only define a Step block, need to change that
     let theLine = lines[this.lineCount];
     let nameStr = /\s*define\s+(?<name>.*)\[\s*/
       .exec(theLine)
@@ -639,6 +650,14 @@ class Parser {
     return true;
   }
 
+  isContextDef(line){
+    // FIXME: Implement this
+  }
+
+  isTriggerDef(line){
+    // FIXME: Implement this
+  }
+
   isTriggerCall(line) {
     const theLine = line.trim();
     if (!theLine.startsWith("when ")) return false;
@@ -659,6 +678,7 @@ class Parser {
     if (!theLine.endsWith("[")) return false;
     return true;
   }
+
   isContext(line) {
     // important: called after other container types!
     const theLine = line.trim();
@@ -687,6 +707,7 @@ class Parser {
 
   unitLineType(line) {
     if (this.isUnit(line)) return Parser.UNIT;
+    if (this.isLibrary(line)) return Parser.LIBRARY;
     if (this.isWhitespace(line)) return Parser.WHITESPACE;
     if (this.isComment(line)) return Parser.COMMENT;
     if (this.isSprite(line)) return Parser.SPRITE;
@@ -694,6 +715,8 @@ class Parser {
     if (this.isStage(line)) return Parser.STAGE;
     if (this.isCostumes(line)) return Parser.COSTUMES;
     if (this.isSounds(line)) return Parser.SOUNDS;
+    if (this.isContextDef(line)) return Parser.CONTEXTDEF;
+    if (this.isTriggerDef(line)) return Parser.TRIGGERDEF;
     if (this.isBlockDef(line)) return Parser.BLOCKDEF;
     if (this.isTriggerCall(line)) return Parser.TRIGGERCALL;
     if (this.isContext(line)) return Parser.CONTEXT;
