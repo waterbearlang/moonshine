@@ -17,18 +17,21 @@ const testdata = `unit Pong [
       // Not supported yet
     ]
 
-    define Reset [
-      go to x: (0) y: (-45)
-      point in direction (pick random (1) to (360))
-      wait (0.5) seconds
+    // condition is a parameter slot
+    // passing and failing are lists of steps
+    define context if (condition:Boolean) [passing:BlockList] else [failing:BlockList] [
+      // need to be able to escape into local code to implement
     ] returns this:Sprite
 
-    define Initialize [
-      hide variable (Winner)
-      set speed to (5)
-      show
-      set (Game Over) to (0)
-    ] returns this:Sprite
+    // image is a local in the context of the trigger
+    // action is the list of steps to be called
+    // not everything is defined because we don't yet have a way to escape into
+    // the host language
+    define trigger (image:Image) loaded [action:BlockList][
+      for each (item:Type) in (action)[
+        item
+      ]
+    ]
 
     define Start at x (x:Number) y (y:Number)[
       go to x: (x) y: (y)
