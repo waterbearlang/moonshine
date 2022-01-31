@@ -117,7 +117,6 @@ describe("Test a more full-featured unit", function () {
     });
     it("sprite blockDef should have a returns with name and type", function () {
       assert.ok(sprite.blockDefs[2].returns);
-      console.log(JSON.stringify(sprite.blockDefs[2].returns));
       assert.equal(sprite.blockDefs[2].returns.name, "this");
       assert.equal(sprite.blockDefs[2].returns.type, "Sprite");
     });

@@ -19,15 +19,18 @@
 // * Costumes
 // * Struct
 
-// While I would like to be able to point at an exact character for errors
-// at least initially Moonshine will be strictly line-based so I don't have to (hopefully)
-// build a character-by-character state machine
-// So, keep the line number, parse the line. If it is expected, all good.
-// If it has an error, take the unparsed line apart to find the error to report a character
-// offset.
+// Within a Library there can (currently) be:
+// * BlockDef - define a step / value block
+// * ContextDef - define a context block
+// * TriggerDef - define a special-case context block called by the system
+// * Comment
+// Note: Libraries will eventually be able to provide costumes, sounds, and other high-level objects
 
 // Currently BlockCall and ValueCall look identical, but differ in where they can appear
 // which should be fairly trivial to handle, but might have been tricky with Peggy
+// They actually *should* be interchangeable, but either with hints for default representation
+// or (more likely for now) everything defaults to a step and what were formerly Value blocks are
+// exclusively the return value from steps and contexts.
 
 class Parser {
   constructor() {
@@ -65,6 +68,12 @@ class Parser {
   }
   static get BLOCKDEF() {
     return Symbol.for("blockdef");
+  }
+  static get CONTEXTDEF() {
+    return Symbol.for("contextdef");
+  }
+  static get TRIGGERDEF() {
+    return Symbol.for("triggerdef");
   }
   static get TRIGGERCALL() {
     return Symbol.for("triggercall");
@@ -160,6 +169,7 @@ class Parser {
     let current = [];
     let parts = [];
     let params = [];
+    let blocklists = [];
     let index = 0;
     let value = null;
     while (index < text.length) {
@@ -169,7 +179,11 @@ class Parser {
         parts.push(current.join(""));
         current.length = 0;
         ({ index, value } = this.Parameter(text, index));
-        params.push(value);
+        if (value.type === "BlockList") {
+          blocklists.push(value);
+        } else {
+          params.push(value);
+        }
         value = null;
       } else if (text[index] === ")") {
         this.nameError(text, index, "illegal close parens");
@@ -179,7 +193,13 @@ class Parser {
       }
     }
     parts.push(current.join(""));
-    return { name: parts.join("()").trim(), params };
+    for (let i = 0; i < blocklists.length; i++) {
+      // remove one set of parens for each blocklist
+      let a = parts.pop();
+      let b = parts.pop();
+      parts.push(a + b);
+    }
+    return { name: parts.join("()").trim(), params, blocklists };
   }
 
   NameCall(text) {
@@ -376,10 +396,143 @@ class Parser {
     };
   }
 
+  Library(lines) {
+    // A library has a name and a colour
+    // ex: library Controls hue: (0) [
+    let theLine = lines[this.lineCount];
+    let split = /\s*library\s+(?<name>.*)\s+hue:\s*\((?<hue>.*)\)\s*\[/.exec(
+      theLine
+    );
+    let name = split.groups.name.trim();
+    let hue = Number(split.groups.hue.trim());
+    let blockDefs = [];
+    let structs = [];
+    let comments = [];
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine === "]") {
+        break;
+      }
+      switch (this.unitLineType(theLine)) {
+        case Parser.WHITESPACE:
+          break;
+        case Parser.COMMENT:
+          comments.push(this.Comment(lines));
+          break;
+        case Parser.STRUCT:
+          structs.push(this.Struct(lines));
+          break;
+        case Parser.CONTEXTDEF:
+          blockDefs.push(this.ContextDef(lines));
+          break;
+        case Parser.TRIGGERDEF:
+          blockDefs.push(this.TriggerDef(lines));
+          break;
+        case Parser.BLOCKDEF:
+          blockDefs.push(this.BlockDef(lines));
+          break;
+        default:
+          this.unitError(lines, "unrecognized Library child type");
+          break;
+      }
+    }
+    return {
+      type: "Library",
+      name,
+      hue,
+      blockDefs,
+      structs,
+      comments,
+    };
+  }
+
+  ContextDef(lines) {
+    // Get name, params, and blocklists from first line
+    // Iterate through lines getting Comment, Steps
+    let theLine = lines[this.lineCount];
+    let nameStr = /\s*define\s+context\s+(?<name>.*)\[\s*/
+      .exec(theLine)
+      .groups.name.trim();
+    let { name, params, blocklists } = this.NameDef(nameStr);
+    let steps = [];
+    let comments = [];
+    let returns = null;
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine.startsWith("]")) {
+        returns = this.Returns(theLine.slice(1).trim());
+        break;
+      }
+      switch (this.unitLineType(theLine)) {
+        case Parser.WHITESPACE:
+          break;
+        case Parser.COMMENT:
+          comments.push(this.Comment(lines));
+          break;
+        case Parser.CONTEXT:
+          steps.push(this.Context(lines));
+          break;
+        case Parser.STEP:
+          steps.push(this.Step(lines));
+          break;
+        default:
+          this.unitError(lines, "unrecognized ContextDef child type");
+          break;
+      }
+    }
+    return {
+      type: "ContextDef",
+      name,
+      params,
+      blocklists,
+      steps,
+      returns,
+      comments,
+    };
+  }
+
+  TriggerDef(lines) {
+    // Get name, params, and blocklists from first line
+    // Iterate through lines getting Comment, Steps
+    // Will need a way to register with the system, part of host code escapes
+    let theLine = lines[this.lineCount];
+    let nameStr = /\s*define\s+trigger\s+(?<name>.*)\[\s*/
+      .exec(theLine)
+      .groups.name.trim();
+    let { name, params, blocklists } = this.NameDef(nameStr);
+    let steps = [];
+    let comments = [];
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine === "]") {
+        break;
+      }
+      switch (this.unitLineType(theLine)) {
+        case Parser.WHITESPACE:
+          break;
+        case Parser.COMMENT:
+          comments.push(this.Comment(lines));
+          break;
+        case Parser.CONTEXT:
+          steps.push(this.Context(lines));
+          break;
+        case Parser.STEP:
+          steps.push(this.Step(lines));
+          break;
+        default:
+          this.unitError(lines, "unrecognized TriggerDef child type");
+          break;
+      }
+    }
+    return { type: "TriggerDef", name, params, blocklists, steps, comments };
+  }
+
   BlockDef(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
-    // Currently can only define a Step block, need to change that
     let theLine = lines[this.lineCount];
     let nameStr = /\s*define\s+(?<name>.*)\[\s*/
       .exec(theLine)
@@ -448,6 +601,7 @@ class Parser {
     return { type: "TriggerCall", name, steps, comments };
   }
 
+  // FIXME: Rename to ContextCall
   Context(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
@@ -482,6 +636,7 @@ class Parser {
     return { type: "Context", name, args, steps, comments };
   }
 
+  // FIXME: Rename to StepCall
   Step(lines) {
     // Get name from first line
     let theLine = lines[this.lineCount];
@@ -496,9 +651,9 @@ class Parser {
     let costumes = [];
     let blockDefs = [];
     let triggerCalls = [];
-    let forms = [];
+    let forms = []; // FIXME: Implement forms
     let sounds = [];
-    let structs = [];
+    let structs = []; // FIXME: Implement structs
     let comments = [];
     while (this.lineCount < lines.length - 1) {
       this.lineCount++;
@@ -527,9 +682,6 @@ class Parser {
           break;
         case Parser.FORM:
           forms.push(this.Form(lines));
-          break;
-        case Parser.SOUNDS:
-          sounds.push(this.Sounds(lines));
           break;
         case Parser.STRUCT:
           structs.push(this.Struct(lines));
@@ -625,6 +777,13 @@ class Parser {
     return true;
   }
 
+  isLibrary(line) {
+    const theLine = line.trim();
+    if (!theLine.startsWith("library ")) return false;
+    if (!theLine.endsWith("[")) return false;
+    return true;
+  }
+
   isStage(line) {
     const theLine = line.trim();
     if (!theLine.startsWith("stage")) return false;
@@ -637,6 +796,18 @@ class Parser {
     if (!theLine.startsWith("define ")) return false;
     if (!theLine.endsWith("[")) return false;
     return true;
+  }
+
+  isContextDef(line) {
+    // define context if (condition:Boolean) (passing:BlockList) else (failing:BlockList) [
+    const theLine = line.trim();
+    return /^define\s+context.*\(.+\:\s*BlockList\s*\)\s*\[$/.test(theLine);
+  }
+
+  isTriggerDef(line) {
+    // define trigger (image:Image) loaded (action:BlockList)[
+    const theLine = line.trim();
+    return /^define\s+trigger.*\(.+\:\s*BlockList\s*\)\s*\[$/.test(theLine);
   }
 
   isTriggerCall(line) {
@@ -659,6 +830,7 @@ class Parser {
     if (!theLine.endsWith("[")) return false;
     return true;
   }
+
   isContext(line) {
     // important: called after other container types!
     const theLine = line.trim();
@@ -687,6 +859,7 @@ class Parser {
 
   unitLineType(line) {
     if (this.isUnit(line)) return Parser.UNIT;
+    if (this.isLibrary(line)) return Parser.LIBRARY;
     if (this.isWhitespace(line)) return Parser.WHITESPACE;
     if (this.isComment(line)) return Parser.COMMENT;
     if (this.isSprite(line)) return Parser.SPRITE;
@@ -694,6 +867,8 @@ class Parser {
     if (this.isStage(line)) return Parser.STAGE;
     if (this.isCostumes(line)) return Parser.COSTUMES;
     if (this.isSounds(line)) return Parser.SOUNDS;
+    if (this.isContextDef(line)) return Parser.CONTEXTDEF;
+    if (this.isTriggerDef(line)) return Parser.TRIGGERDEF;
     if (this.isBlockDef(line)) return Parser.BLOCKDEF;
     if (this.isTriggerCall(line)) return Parser.TRIGGERCALL;
     if (this.isContext(line)) return Parser.CONTEXT;
@@ -704,9 +879,9 @@ class Parser {
   nameError(text, index, msg) {
     const pointer = Array(index + 1).fill(" ");
     pointer.push("^");
-    const err = `Name error ${msg} at index ${index}:\n"${text}"\n${pointer.join(
-      ""
-    )}`;
+    const err = `Name error ${msg} on line ${
+      this.lineCount + 1
+    } at index ${index}:\n"${text}"\n${pointer.join("")}`;
     console.error(err);
     throw new Error(err);
   }
