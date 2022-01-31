@@ -19,15 +19,18 @@
 // * Costumes
 // * Struct
 
-// While I would like to be able to point at an exact character for errors
-// at least initially Moonshine will be strictly line-based so I don't have to (hopefully)
-// build a character-by-character state machine
-// So, keep the line number, parse the line. If it is expected, all good.
-// If it has an error, take the unparsed line apart to find the error to report a character
-// offset.
+// Within a Library there can (currently) be:
+// * BlockDef - define a step / value block
+// * ContextDef - define a context block
+// * TriggerDef - define a special-case context block called by the system
+// * Comment
+// Note: Libraries will eventually be able to provide costumes, sounds, and other high-level objects
 
 // Currently BlockCall and ValueCall look identical, but differ in where they can appear
 // which should be fairly trivial to handle, but might have been tricky with Peggy
+// They actually *should* be interchangeable, but either with hints for default representation
+// or (more likely for now) everything defaults to a step and what were formerly Value blocks are
+// exclusively the return value from steps and contexts.
 
 class Parser {
   constructor() {
@@ -190,6 +193,12 @@ class Parser {
       }
     }
     parts.push(current.join(""));
+    for (let i = 0; i < blocklists.length; i++) {
+      // remove one set of parens for each blocklist
+      let a = parts.pop();
+      let b = parts.pop();
+      parts.push(a + b);
+    }
     return { name: parts.join("()").trim(), params, blocklists };
   }
 
@@ -395,7 +404,7 @@ class Parser {
       theLine
     );
     let name = split.groups.name.trim();
-    let hue = split.groups.hue.trim();
+    let hue = Number(split.groups.hue.trim());
     let blockDefs = [];
     let structs = [];
     let comments = [];
@@ -442,7 +451,7 @@ class Parser {
     // Get name, params, and blocklists from first line
     // Iterate through lines getting Comment, Steps
     let theLine = lines[this.lineCount];
-    let nameStr = /\s*define\s+(?<name>.*)\[\s*/
+    let nameStr = /\s*define\s+context\s+(?<name>.*)\[\s*/
       .exec(theLine)
       .groups.name.trim();
     let { name, params, blocklists } = this.NameDef(nameStr);
@@ -487,8 +496,9 @@ class Parser {
   TriggerDef(lines) {
     // Get name, params, and blocklists from first line
     // Iterate through lines getting Comment, Steps
+    // Will need a way to register with the system, part of host code escapes
     let theLine = lines[this.lineCount];
-    let nameStr = /\s*define\s+(?<name>.*)\[\s*/
+    let nameStr = /\s*define\s+trigger\s+(?<name>.*)\[\s*/
       .exec(theLine)
       .groups.name.trim();
     let { name, params, blocklists } = this.NameDef(nameStr);
@@ -517,7 +527,7 @@ class Parser {
           break;
       }
     }
-    return { type: "ContextDef", name, params, blocklists, steps, comments };
+    return { type: "TriggerDef", name, params, blocklists, steps, comments };
   }
 
   BlockDef(lines) {
