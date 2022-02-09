@@ -26,6 +26,24 @@ describe("test env functionality", function () {
       assert.equal(env.get("one"), 1);
     });
   });
-  describe("test current", function () {});
-  describe("test clone", function () {});
+  describe("test current", function () {
+    it("does current return the right things?", function () {
+      assert.deepEqual(env.current(), { one: 1 });
+    });
+  });
+  describe("test clone", function () {
+    let c;
+    before(function () {
+      env.push("two", 2);
+      env.push("one", 11);
+      c = env.clone();
+    });
+    it("clone should initially be the same", function () {
+      assert.deepEqual(env._values, c._values);
+    });
+    it("clone should diverge on changes", function () {
+      c.push("three", 3);
+      assert.notDeepEqual(env._values, c._values);
+    });
+  });
 });

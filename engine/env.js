@@ -3,7 +3,7 @@ class Env {
     this._values = values || {};
   }
   clone() {
-    return new Env(JSON.parse(JSON.serialize(this._values)));
+    return new Env(JSON.parse(JSON.stringify(this._values)));
   }
   push(key, value) {
     if (!this._values[key]) {
