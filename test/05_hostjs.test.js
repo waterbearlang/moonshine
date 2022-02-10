@@ -28,7 +28,7 @@ import assert from "assert";
 
 const parser = new Parser();
 
-describe("Test library unit", function () {
+describe("Test host language escaping", function () {
   before(function () {
     ast = parser.parse(testdata);
   });
