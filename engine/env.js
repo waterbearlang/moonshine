@@ -13,11 +13,18 @@ class Env {
     return this;
   }
   get(key, index) {
+    let arr = this._values[key];
+    if (!arr) {
+      throw new Error(`No array found for key "${key}"`);
+    }
+    if (!arr.length) {
+      throw new Error(`Array for key "${key}" is empty`);
+    }
     if (index === undefined) {
       // if index is not specified, return the most recent item
-      return this._values[key].slice(-1)[0];
+      return arr[arr.length - 1];
     }
-    return this._values[key][index];
+    return arr[index];
   }
   current() {
     let ret = {};
