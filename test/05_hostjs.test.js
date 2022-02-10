@@ -1,35 +1,10 @@
 const testdata = `unit Built-ins [
-  library Controls hue: (0) language: (JavaScript)[
+  library Controls hue: (0) language: (JavaScript) [
 
     define wait (seconds:Number) seconds[
       // pause before calling next block
       log (seconds)
     ] returns elapsed:Number
-
-    define value1[
-      hosted async returns (value1:Number)[
-        return async(env) => {
-          setTimeout(()=>env.push('value1', 1), 300);
-        }
-      ]
-    ]
-
-    define value2[
-      hosted async returns (value2:Number)[
-        return async(env) => {
-          env.push('value2', 3 * env.get('value1'));
-          setTimeout(()=>env, 100);
-        }
-      ]
-    ]
-
-    define value3[
-      hosted async returns (value3:Number)[
-        return async(env) => {
-          env.push('value3', 5 * env.get('value2'));
-        }
-      ]
-    ]
 
     define trigger each frame (elapsed time:Number) (steps:BlockList)[
       render triangles
@@ -63,4 +38,3 @@ describe("Test library unit", function () {
     });
   });
 });
-

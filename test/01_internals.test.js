@@ -86,10 +86,10 @@ describe("Test the parser parts", function(){
     it("Test context", function(){
       assert.equal(
         parser.unitLineType("septimus parsimus(explodius) ["),
-        Parser.CONTEXT
+        Parser.CONTEXTCALL
       )});
     it("Test step type", function(){
-      assert.equal(parser.unitLineType("small furry creatures"), Parser.STEP)});
+      assert.equal(parser.unitLineType("small furry creatures"), Parser.STEPCALL)});
     // Disabling unknown type as steps are currently swallowing all errors
     // it("Test unknown type", function(){
     //   assert.equal(parser.unitLineType("not a unit()"), Parser.PARSEERROR)});
