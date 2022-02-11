@@ -43,4 +43,22 @@ describe("Test host language escaping", function () {
       assert.equal(ast.units.length, 1);
     });
   });
+  describe("test library", function(){
+    let library;
+    it("library should exist", function(){
+      library = ast.units[0].libraries[0];
+      assert.ok(library);
+    });
+    it("library should have 3 block definitions", function(){
+      assert.equal(library.blockDefs.length, 3);
+    });
+  });
+  describe("test BlockDef", function(){
+    let blockDef;
+    it("first blockDef should be type BlockDef", function(){
+      blockDef = ast.units[0].libraries[0].blockDefs[0];
+      assert.ok(blockDef);
+      assert.equal(blockDef.type, "BlockDef");
+    });
+  });
 });
