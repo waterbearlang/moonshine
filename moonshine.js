@@ -78,14 +78,17 @@ class Parser {
   static get TRIGGERCALL() {
     return Symbol.for("triggercall");
   }
-  static get CONTEXT() {
-    return Symbol.for("context");
+  static get CONTEXTCALL() {
+    return Symbol.for("contextcall");
   }
-  static get STEP() {
-    return Symbol.for("step");
+  static get STEPCALL() {
+    return Symbol.for("stepcall");
   }
   static get PARSEERROR() {
     return Symbol.for("parseerror");
+  }
+  static get HOSTED() {
+    return Symbol.for("hosted");
   }
 
   parseLines(lines) {
@@ -313,7 +316,12 @@ class Parser {
       let [_, name, type] = /returns (.+):(.+)/.exec(text);
       return { name: this.SimpleName(name), type: this.SimpleName(type) };
     } catch (e) {
-      this.nameError(text, 0, "problem parsing returns for block definition");
+      console.error(e);
+      this.nameError(
+        text,
+        0,
+        "problem parsing returns for block/context definition"
+      );
     }
   }
 
@@ -400,10 +408,12 @@ class Parser {
     // A library has a name and a colour
     // ex: library Controls hue: (0) [
     let theLine = lines[this.lineCount];
-    let split = /\s*library\s+(?<name>.*)\s+hue:\s*\((?<hue>.*)\)\s*\[/.exec(
-      theLine
-    );
+    let split =
+      /\s*library\s+(?<name>.*)\s+hue:\s*\((?<hue>.*)\)\s+language:\s*\((?<language>.*)\)\s*\[/.exec(
+        theLine
+      );
     let name = split.groups.name.trim();
+    let language = split.groups.language.trim();
     let hue = Number(split.groups.hue.trim());
     let blockDefs = [];
     let structs = [];
@@ -441,6 +451,7 @@ class Parser {
       type: "Library",
       name,
       hue,
+      language,
       blockDefs,
       structs,
       comments,
@@ -471,11 +482,14 @@ class Parser {
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
           break;
-        case Parser.CONTEXT:
-          steps.push(this.Context(lines));
+        case Parser.CONTEXTCALL:
+          steps.push(this.ContextCall(lines));
           break;
-        case Parser.STEP:
-          steps.push(this.Step(lines));
+        case Parser.STEPCALL:
+          steps.push(this.StepCall(lines));
+          break;
+        case Parser.HOSTED:
+          steps.push(this.Hosted(lines));
           break;
         default:
           this.unitError(lines, "unrecognized ContextDef child type");
@@ -516,11 +530,14 @@ class Parser {
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
           break;
-        case Parser.CONTEXT:
-          steps.push(this.Context(lines));
+        case Parser.CONTEXTCALL:
+          steps.push(this.ContextCall(lines));
           break;
-        case Parser.STEP:
-          steps.push(this.Step(lines));
+        case Parser.STEPCALL:
+          steps.push(this.StepCall(lines));
+          break;
+        case Parser.HOSTED:
+          steps.push(this.HostedNoReturns(lines));
           break;
         default:
           this.unitError(lines, "unrecognized TriggerDef child type");
@@ -528,6 +545,37 @@ class Parser {
       }
     }
     return { type: "TriggerDef", name, params, blocklists, steps, comments };
+  }
+
+  Hosted(lines) {
+    let theLine = lines[this.lineCount];
+    let returnStr = /hosted\s*(?<retStr>returns.*)\s*\[\@/
+      .exec(theLine)
+      .groups.retStr.trim();
+    let returns = this.Returns(returnStr);
+    let code = [];
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine === "@]") {
+        break;
+      }
+      code.push(lines[this.lineCount]); // keep whitespace, just in case
+    }
+    return { type: "Hosted", returns, code: code.join("\n") };
+  }
+
+  HostedNoReturns(lines) {
+    let code = [];
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      let theLine = lines[this.lineCount].trim();
+      if (theLine === "@]") {
+        break;
+      }
+      code.push(lines[this.lineCount]); // keep whitespace, just in case
+    }
+    return { type: "HostedNoReturns", code: code.join("\n") };
   }
 
   BlockDef(lines) {
@@ -554,11 +602,14 @@ class Parser {
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
           break;
-        case Parser.CONTEXT:
-          steps.push(this.Context(lines));
+        case Parser.CONTEXTCALL:
+          steps.push(this.ContextCall(lines));
           break;
-        case Parser.STEP:
-          steps.push(this.Step(lines));
+        case Parser.STEPCALL:
+          steps.push(this.StepCall(lines));
+          break;
+        case Parser.HOSTED:
+          steps.push(this.Hosted(lines));
           break;
         default:
           this.unitError(lines, "unrecognized BlockDef child type");
@@ -587,11 +638,11 @@ class Parser {
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
           break;
-        case Parser.CONTEXT:
-          steps.push(this.Context(lines));
+        case Parser.CONTEXTCALL:
+          steps.push(this.ContextCall(lines));
           break;
-        case Parser.STEP:
-          steps.push(this.Step(lines));
+        case Parser.STEPCALL:
+          steps.push(this.StepCall(lines));
           break;
         default:
           this.unitError(lines, "Unrecognized TriggerCall child type");
@@ -601,8 +652,7 @@ class Parser {
     return { type: "TriggerCall", name, steps, comments };
   }
 
-  // FIXME: Rename to ContextCall
-  Context(lines) {
+  ContextCall(lines) {
     // Get name from first line
     // Iterate through lines getting Comment, Steps
     let theLine = lines[this.lineCount];
@@ -622,11 +672,11 @@ class Parser {
         case Parser.COMMENT:
           comments.push(this.Comment(lines));
           break;
-        case Parser.CONTEXT:
-          steps.push(this.Context(lines));
+        case Parser.CONTEXTCALL:
+          steps.push(this.ContextCall(lines));
           break;
-        case Parser.STEP:
-          steps.push(this.Step(lines));
+        case Parser.STEPCALL:
+          steps.push(this.StepCall(lines));
           break;
         default:
           this.unitError(lines, "unrecognized Context child type");
@@ -636,8 +686,7 @@ class Parser {
     return { type: "Context", name, args, steps, comments };
   }
 
-  // FIXME: Rename to StepCall
-  Step(lines) {
+  StepCall(lines) {
     // Get name from first line
     let theLine = lines[this.lineCount];
     let nameStr = theLine.trim();
@@ -798,10 +847,17 @@ class Parser {
     return true;
   }
 
+  isHosted(line) {
+    const theLine = line.trim();
+    if (!theLine.startsWith("hosted")) return false;
+    if (!theLine.endsWith("[@")) return false;
+    return true;
+  }
+
   isContextDef(line) {
     // define context if (condition:Boolean) (passing:BlockList) else (failing:BlockList) [
     const theLine = line.trim();
-    return /^define\s+context.*\(.+\:\s*BlockList\s*\)\s*\[$/.test(theLine);
+    return /^define\s+context\s+.*\(.+\:\s*BlockList\s*\)\s*\[$/.test(theLine);
   }
 
   isTriggerDef(line) {
@@ -831,14 +887,14 @@ class Parser {
     return true;
   }
 
-  isContext(line) {
+  isContextCall(line) {
     // important: called after other container types!
     const theLine = line.trim();
     if (!theLine.endsWith("[")) return false;
     return true;
   }
 
-  isStep(line) {
+  isStepCall(line) {
     // important: called after other types
     return true;
   }
@@ -867,12 +923,13 @@ class Parser {
     if (this.isStage(line)) return Parser.STAGE;
     if (this.isCostumes(line)) return Parser.COSTUMES;
     if (this.isSounds(line)) return Parser.SOUNDS;
+    if (this.isHosted(line)) return Parser.HOSTED;
     if (this.isContextDef(line)) return Parser.CONTEXTDEF;
     if (this.isTriggerDef(line)) return Parser.TRIGGERDEF;
     if (this.isBlockDef(line)) return Parser.BLOCKDEF;
     if (this.isTriggerCall(line)) return Parser.TRIGGERCALL;
-    if (this.isContext(line)) return Parser.CONTEXT;
-    if (this.isStep(line)) return Parser.STEP;
+    if (this.isContextCall(line)) return Parser.CONTEXTCALL;
+    if (this.isStepCall(line)) return Parser.STEPCALL;
     return Parser.PARSEERROR;
   }
 

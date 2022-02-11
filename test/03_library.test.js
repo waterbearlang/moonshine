@@ -1,5 +1,5 @@
 const testdata = `unit Built-ins [
-  library Controls hue: (0) [
+  library Controls hue: (0) language: (JavaScript) [
 
     define wait (seconds:Number) seconds[
       // pause before calling next block
