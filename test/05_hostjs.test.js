@@ -1,23 +1,29 @@
 const testdata = `unit Built-ins [
   library Controls hue: (0) language: (JavaScript) [
 
-    define wait (seconds:Number) seconds[
-      // pause before calling next block
-      log (seconds)
+    define PI [
+      hosted returns elapsed:Number [@
+        return Math.PI;
+      @]
     ] returns elapsed:Number
 
     define trigger each frame (elapsed time:Number) (steps:BlockList)[
-      render triangles
-      consolidate sprites
+      hosted [@
+        steps.forEach(step => step.run());
+      @]
     ]
 
     define context loop over (list:TypeAList) (action:BlockList)[
       // needs locals for item and index
       // returns a new list
-      before (action)
-      action
-      after (action)
-    ] returns list:TypeBList
+      hosted returns list:TypeBList[@
+        let results;
+        for (let index=0; index < list.length; index++){
+          let item = list[index];
+          results.push = action.map(block => block.run(index, item)).pop();
+        }
+      @]
+    ] returns results:TypeBList
   ]
 ]`;
 

@@ -87,6 +87,9 @@ class Parser {
   static get PARSEERROR() {
     return Symbol.for("parseerror");
   }
+  static get HOSTED() {
+    return Symbol.for("hosted");
+  }
 
   parseLines(lines) {
     const comments = [];
@@ -485,6 +488,9 @@ class Parser {
         case Parser.STEPCALL:
           steps.push(this.StepCall(lines));
           break;
+        case Parser.HOSTED:
+          steps.push(this.Hosted(lines));
+          break;
         default:
           this.unitError(lines, "unrecognized ContextDef child type");
           break;
@@ -530,12 +536,46 @@ class Parser {
         case Parser.STEPCALL:
           steps.push(this.StepCall(lines));
           break;
+        case Parser.HOSTED:
+          steps.push(this.HostedNoReturns(lines));
+          break;
         default:
           this.unitError(lines, "unrecognized TriggerDef child type");
           break;
       }
     }
     return { type: "TriggerDef", name, params, blocklists, steps, comments };
+  }
+
+  Hosted(lines) {
+    let theLine = lines[this.lineCount];
+    let returnStr = /hosted\s*(?<retStr>returns.*)\s*\[\@/
+      .exec(theLine)
+      .groups.retStr.trim();
+    let returns = this.Returns(returnStr);
+    let code = [];
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      theLine = lines[this.lineCount].trim();
+      if (theLine === "@]") {
+        break;
+      }
+      code.push(lines[this.lineCount]); // keep whitespace, just in case
+    }
+    return { type: "Hosted", returns, code: code.join("\n") };
+  }
+
+  HostedNoReturns(lines) {
+    let code = [];
+    while (this.lineCount < lines.length - 1) {
+      this.lineCount++;
+      let theLine = lines[this.lineCount].trim();
+      if (theLine === "@]") {
+        break;
+      }
+      code.push(lines[this.lineCount]); // keep whitespace, just in case
+    }
+    return { type: "HostedNoReturns", code: code.join("\n") };
   }
 
   BlockDef(lines) {
@@ -567,6 +607,9 @@ class Parser {
           break;
         case Parser.STEPCALL:
           steps.push(this.StepCall(lines));
+          break;
+        case Parser.HOSTED:
+          steps.push(this.Hosted(lines));
           break;
         default:
           this.unitError(lines, "unrecognized BlockDef child type");
@@ -804,6 +847,13 @@ class Parser {
     return true;
   }
 
+  isHosted(line) {
+    const theLine = line.trim();
+    if (!theLine.startsWith("hosted")) return false;
+    if (!theLine.endsWith("[@")) return false;
+    return true;
+  }
+
   isContextDef(line) {
     // define context if (condition:Boolean) (passing:BlockList) else (failing:BlockList) [
     const theLine = line.trim();
@@ -873,6 +923,7 @@ class Parser {
     if (this.isStage(line)) return Parser.STAGE;
     if (this.isCostumes(line)) return Parser.COSTUMES;
     if (this.isSounds(line)) return Parser.SOUNDS;
+    if (this.isHosted(line)) return Parser.HOSTED;
     if (this.isContextDef(line)) return Parser.CONTEXTDEF;
     if (this.isTriggerDef(line)) return Parser.TRIGGERDEF;
     if (this.isBlockDef(line)) return Parser.BLOCKDEF;
