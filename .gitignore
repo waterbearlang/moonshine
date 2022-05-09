@@ -1,3 +1,6 @@
+# Temporary and generated moonshine files
+examples/*.json
+
 # Logs
 logs
 *.log
