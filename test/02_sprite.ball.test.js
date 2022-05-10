@@ -1,51 +1,53 @@
-const testdata = `unit Pong [
-  sprite Ball [
+const testdata = `
+name: Pong
 
-    when 🏁 clicked [
-      Initialize
-      Reset
-      repeat until ((Game Over) = (1))[
-        move (speed) steps
-      ]
-    ]
+sprite Ball [
 
-    costumes [
-      // Not supported yet
-    ]
-
-    sounds [
-      // Not supported yet
-    ]
-
-    define Reset [
-      go to x: (0) y: (-45)
-      point in direction (pick random (1) to (360))
-      wait (0.5) seconds
-    ] returns this:Sprite
-
-    define Initialize [
-      hide variable (Winner)
-      set speed to (5)
-      show
-      set (Game Over) to (0)
-    ] returns this:Sprite
-
-    define Start at x (x:Number) y (y:Number)[
-      go to x: (x) y: (y)
-      turn to (90)
-    ] returns this:Sprite
-
-    when I receive (Bounce)[
-      turn ↻ (((Bounce Direction) - (direction)) * 2) degrees
+  when 🏁 clicked [
+    Initialize
+    Reset
+    repeat until ((Game Over) = (1))[
       move (speed) steps
     ]
-
-    when I receive (Score Player)[
-      change (speed) by (0.5)
-      Reset
-    ]
   ]
-]`;
+
+  costumes [
+    // Not supported yet
+  ]
+
+  sounds [
+    // Not supported yet
+  ]
+
+  define Reset [
+    go to x: (0) y: (-45)
+    point in direction (pick random (1) to (360))
+    wait (0.5) seconds
+  ] returns this:Sprite
+
+  define Initialize [
+    hide variable (Winner)
+    set speed to (5)
+    show
+    set (Game Over) to (0)
+  ] returns this:Sprite
+
+  define Start at x (x:Number) y (y:Number)[
+    go to x: (x) y: (y)
+    turn to (90)
+  ] returns this:Sprite
+
+  when I receive (Bounce)[
+    turn ↻ (((Bounce Direction) - (direction)) * 2) degrees
+    move (speed) steps
+  ]
+
+  when I receive (Score Player)[
+    change (speed) by (0.5)
+    Reset
+  ]
+]
+`;
 
 let ast;
 

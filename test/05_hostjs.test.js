@@ -1,31 +1,32 @@
-const testdata = `unit Built-ins [
-  library Controls hue: (0) language: (JavaScript) [
+const testdata = `
+name: Controls
+hue: 0
+language: JavaScript
 
-    define PI [
-      hosted returns elapsed:Number [@
-        return Math.PI;
-      @]
-    ] returns elapsed:Number
+define PI [
+  hosted returns elapsed:Number [@
+    return Math.PI;
+  @]
+] returns elapsed:Number
 
-    define trigger each frame (elapsed time:Number) (steps:BlockList)[
-      hosted [@
-        steps.forEach(step => step.run());
-      @]
-    ]
+define trigger each frame (elapsed time:Number) (steps:BlockList)[
+  hosted [@
+    steps.forEach(step => step.run());
+  @]
+]
 
-    define context loop over (list:TypeAList) (action:BlockList)[
-      // needs locals for item and index
-      // returns a new list
-      hosted returns results:TypeBList[@
-        let results;
-        for (let index=0; index < list.length; index++){
-          let item = list[index];
-          results.push = action.map(block => block.run(index, item)).pop();
-        }
-      @]
-    ] returns results:TypeBList
-  ]
-]`;
+define context loop over (list:TypeAList) (action:BlockList)[
+  // needs locals for item and index
+  // returns a new list
+  hosted returns results:TypeBList[@
+    let results;
+    for (let index=0; index < list.length; index++){
+      let item = list[index];
+      results.push = action.map(block => block.run(index, item)).pop();
+    }
+  @]
+] returns results:TypeBList
+`;
 
 let ast;
 

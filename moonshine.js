@@ -2,29 +2,29 @@
 
 // Attempt to hand-roll a parser
 
-// Top level must be "unit NAME" or comment or whitespace then contents bracketed by [ and ]
-// Within the unit at the top level there can be:
+// Top level MAY have metadata in the form of <name> : <value>
+// The first  line without a colon ends the metadata section
+// whitespace is not relevant in the metadata, but it is line-oriented
+// names cannot be repeated within a metadata section
+// the only required metadata is "name" and then only if there is no filename
+// and hue is recommended for libraries.
+
+// Within the unit, after the metadata at the top level there can be:
 // * Comment
 // * Stage
-// * Library
 // * Sprite
-// * And eventually non-visible things like databases and such
-
-// Within a Sprite there can be:
-// * Comment
-// * BlockDef
-// * TriggerCall
-// * Form (or local variables and their defaults?)
-// * Sounds
-// * Costumes
+// * BlockDef (including ContextDef and TriggerDef)
+// * TriggerCall (which makes this a script rather than a library)
+// * any other block call (won't be run, but can be stored like a palette)
 // * Struct
+// * Form (for editing structs)
+// * State (a special struct that can be updated)
+// * Sounds
+// * Costumes and other images
+// * And eventually non-visible things like database connections and such
 
-// Within a Library there can (currently) be:
-// * BlockDef - define a step / value block
-// * ContextDef - define a context block
-// * TriggerDef - define a special-case context block called by the system
-// * Comment
-// Note: Libraries will eventually be able to provide costumes, sounds, and other high-level objects
+// Optionally following these, only allowed at the end of the file, can be three moon emoji followed by
+// any number of inline media, base-64 encoded, to keep them together and avoid broken links.
 
 // Currently BlockCall and ValueCall look identical, but differ in where they can appear
 // which should be fairly trivial to handle, but might have been tricky with Peggy
@@ -63,9 +63,6 @@ class Parser {
   static get SOUNDS() {
     return Symbol.for("sounds");
   }
-  static get LIBRARY() {
-    return Symbol.for("library");
-  }
   static get BLOCKDEF() {
     return Symbol.for("blockdef");
   }
@@ -93,7 +90,6 @@ class Parser {
 
   parseLines(lines) {
     const comments = [];
-    const units = [];
     while (this.lineCount < lines.length) {
       let theLine = lines[this.lineCount].trim();
       if (theLine === "]") {
@@ -144,6 +140,16 @@ class Parser {
       return false;
     }
     return true;
+  }
+
+  Metadata(lines) {
+    let data = {};
+    let theLine = lines[this.lineCount];
+    while (theLine.includes(":")) {
+      let [name, value] = theLine.split(":");
+      // LEFT OFF HERE, finish Metadata parser and then use it
+    }
+    return data;
   }
 
   Comment(lines) {
@@ -363,58 +369,8 @@ class Parser {
     // Get name from first line
     // Iterate through lines getting Comment, Stage, Library, Sprite
     let theLine = lines[this.lineCount];
-    let name = /\s*unit\s+(?<name>.*)\[\s*/.exec(theLine).groups.name.trim();
     let sprites = [];
     let stages = [];
-    let libraries = [];
-    let comments = [];
-    while (this.lineCount < lines.length - 1) {
-      this.lineCount++;
-      theLine = lines[this.lineCount].trim();
-      if (theLine === "]") {
-        break;
-      }
-      switch (this.unitLineType(theLine)) {
-        case Parser.WHITESPACE:
-          break;
-        case Parser.COMMENT:
-          comments.push(this.Comment(lines));
-          break;
-        case Parser.SPRITE:
-          sprites.push(this.Sprite(lines));
-          break;
-        case Parser.STAGE:
-          stages.push(this.Stage(lines));
-          break;
-        case Parser.LIBRARY:
-          libraries.push(this.Library(lines));
-          break;
-        default:
-          this.unitError(lines, "unrecognized unit child type");
-          break;
-      }
-    }
-    return {
-      type: "Unit",
-      name,
-      sprites,
-      stages,
-      libraries,
-      comments,
-    };
-  }
-
-  Library(lines) {
-    // A library has a name and a colour
-    // ex: library Controls hue: (0) [
-    let theLine = lines[this.lineCount];
-    let split =
-      /\s*library\s+(?<name>.*)\s+hue:\s*\((?<hue>.*)\)\s+language:\s*\((?<language>.*)\)\s*\[/.exec(
-        theLine
-      );
-    let name = split.groups.name.trim();
-    let language = split.groups.language.trim();
-    let hue = Number(split.groups.hue.trim());
     let blockDefs = [];
     let structs = [];
     let comments = [];
@@ -442,18 +398,23 @@ class Parser {
         case Parser.BLOCKDEF:
           blockDefs.push(this.BlockDef(lines));
           break;
+        case Parser.SPRITE:
+          sprites.push(this.Sprite(lines));
+          break;
+        case Parser.STAGE:
+          stages.push(this.Stage(lines));
+          break;
         default:
-          this.unitError(lines, "unrecognized Library child type");
+          this.unitError(lines, "unrecognized unit child type");
           break;
       }
     }
     return {
-      type: "Library",
+      type: "Unit",
       name,
-      hue,
-      language,
-      blockDefs,
-      structs,
+      sprites,
+      stages,
+      libraries,
       comments,
     };
   }
