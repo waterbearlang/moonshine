@@ -147,7 +147,9 @@ class Parser {
     let theLine = lines[this.lineCount];
     while (theLine.includes(":")) {
       let [name, value] = theLine.split(":");
-      // LEFT OFF HERE, finish Metadata parser and then use it
+      data[name.trim()] = value.trim();
+      this.lineCount++;
+      theLine = lines[this.lineCount);
     }
     return data;
   }
