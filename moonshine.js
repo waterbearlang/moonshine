@@ -45,6 +45,9 @@ class Parser {
   static get WHITESPACE() {
     return Symbol.for("whitespace");
   }
+  static get METADATA(){
+    return Symbol.for("metadata");
+  }
   static get COMMENT() {
     return Symbol.for("comment");
   }
@@ -145,13 +148,13 @@ class Parser {
   Metadata(lines) {
     let data = {};
     let theLine = lines[this.lineCount];
-    while (theLine.includes(":")) {
+    while (theLine && theLine.includes(":")) {
       let [name, value] = theLine.split(":");
       data[name.trim()] = value.trim();
       this.lineCount++;
-      theLine = lines[this.lineCount);
+      theLine = lines[this.lineCount];
     }
-    return data;
+    return { type: "Metadata", value: data };
   }
 
   Comment(lines) {
@@ -784,9 +787,15 @@ class Parser {
   isUnit(line) {
     // OK, this is going to get a bit complex
     const theLine = line.trim();
-    if (!theLine.startsWith("unit ")) return false;
-    if (!theLine.endsWith("[")) return false;
+    // We may need lookahead. An empty file is a valid unit. A file with just metadata is a valid unit.
+    // going to punt on this for now.
+    // FIXME
     return true;
+  }
+
+  isMetadata(line) {
+    // This is deceptive, because metadata is defined in part by its position
+    return line.split(":").length === 2;
   }
 
   isLibrary(line) {
