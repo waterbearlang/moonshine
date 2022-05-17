@@ -39,25 +39,15 @@ describe("Test host language escaping", function () {
   before(function () {
     ast = parser.parse(testdata);
   });
-  describe("parse", function () {
-    it("unit should be found", function () {
-      assert.equal(ast.units.length, 1);
-    });
-  });
   describe("test library", function () {
-    let library;
-    it("library should exist", function () {
-      library = ast.units[0].libraries[0];
-      assert.ok(library);
-    });
     it("library should have 3 block definitions", function () {
-      assert.equal(library.blockDefs.length, 3);
+      assert.equal(ast.blockDefs.length, 3);
     });
   });
   describe("test BlockDef", function () {
     let blockDef;
     it("first blockDef should be type BlockDef", function () {
-      blockDef = ast.units[0].libraries[0].blockDefs[0];
+      blockDef = ast.blockDefs[0];
       assert.ok(blockDef);
       assert.equal(blockDef.type, "BlockDef");
     });
@@ -69,7 +59,7 @@ describe("Test host language escaping", function () {
   describe("test BlockDef hosted", function () {
     let hosted;
     it("first step should be of type Hosted", function () {
-      hosted = ast.units[0].libraries[0].blockDefs[0].steps[0];
+      hosted = ast.blockDefs[0].steps[0];
       assert.ok(hosted);
       assert.equal(hosted.type, "Hosted");
     });
@@ -84,7 +74,7 @@ describe("Test host language escaping", function () {
   describe("test TriggerDef hosted", function () {
     let hosted;
     it("first step should be of type HostedNoReturns", function () {
-      hosted = ast.units[0].libraries[0].blockDefs[1].steps[0];
+      hosted = ast.blockDefs[1].steps[0];
       assert.ok(hosted);
       assert.equal(hosted.type, "HostedNoReturns");
     });
@@ -95,7 +85,7 @@ describe("Test host language escaping", function () {
   describe("test ContextDef hosted", function () {
     let hosted;
     it("first step should be of type Hosted", function () {
-      hosted = ast.units[0].libraries[0].blockDefs[2].steps[0];
+      hosted = ast.blockDefs[2].steps[0];
       assert.ok(hosted);
       assert.equal(hosted.type, "Hosted");
     });

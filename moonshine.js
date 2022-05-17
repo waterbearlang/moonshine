@@ -32,8 +32,13 @@
 // or (more likely for now) everything defaults to a step and what were formerly Value blocks are
 // exclusively the return value from steps and contexts.
 
+import { basename } from "path";
+import random from "random";
+import seedrandom from "seedrandom";
+
 class Parser {
-  constructor() {
+  constructor(filename) {
+    this.filename = filename; // if unit read from a file, this should be provide. Only matters if no name metadata is defined
     this.lineCount = 0;
   }
 
@@ -45,7 +50,7 @@ class Parser {
   static get WHITESPACE() {
     return Symbol.for("whitespace");
   }
-  static get METADATA(){
+  static get METADATA() {
     return Symbol.for("metadata");
   }
   static get COMMENT() {
@@ -91,37 +96,12 @@ class Parser {
     return Symbol.for("hosted");
   }
 
-  parseLines(lines) {
-    const comments = [];
-    while (this.lineCount < lines.length) {
-      let theLine = lines[this.lineCount].trim();
-      if (theLine === "]") {
-        break;
-      }
-      switch (this.unitLineType(lines[this.lineCount])) {
-        case Parser.WHITESPACE:
-          break;
-        case Parser.COMMENT:
-          comments.push(this.Comment(lines));
-          break;
-        case Parser.UNIT:
-          units.push(this.Unit(lines));
-          break;
-        default:
-          this.unitError(lines, "unrecognized line in file");
-          break;
-      }
-      this.lineCount++;
-    }
-    return { comments, units };
-  }
-
   parse(text) {
-    return this.parseLines(text.split("\n"));
+    return this.Unit(text.split("\n"));
   }
 
   isWhitespace(line) {
-    return !line.trim();
+    return line.trim().length === 0;
   }
 
   isComment(line) {
@@ -148,13 +128,19 @@ class Parser {
   Metadata(lines) {
     let data = {};
     let theLine = lines[this.lineCount];
-    while (theLine && theLine.includes(":")) {
-      let [name, value] = theLine.split(":");
-      data[name.trim()] = value.trim();
+    while (this.lineCount < lines.length) {
+      if (this.isWhitespace(theLine)) {
+        // skip
+      } else if (this.isMetadata(theLine)) {
+        let [name, value] = theLine.split(":");
+        data[name.trim()] = value.trim();
+      } else {
+        break;
+      }
       this.lineCount++;
       theLine = lines[this.lineCount];
     }
-    return { type: "Metadata", value: data };
+    return data;
   }
 
   Comment(lines) {
@@ -372,15 +358,34 @@ class Parser {
 
   Unit(lines) {
     // Get name from first line
-    // Iterate through lines getting Comment, Stage, Library, Sprite
+    // Iterate through lines getting Comment, Stage, BlockDef, BlockCall, Sprite, etc.
+    let metadata = this.Metadata(lines);
+    let name, hue;
+    if (metadata.name) {
+      name = metadata.name;
+      delete metadata.name;
+    } else if (this.filename) {
+      name = basename(this.filename, ".moon");
+    } else {
+      name = "anonymous";
+    }
+    if (metadata.hue) {
+      // hue is used by the block visualization to give a unit a unique color for blocks
+      hue = Number(metadata.hue);
+      delete metadata.hue;
+    } else {
+      // If the unit isn't given a hue, generate a "random" one, but consistently
+      random.use(seedrandom(name));
+      hue = random.int(0, 359);
+    }
     let theLine = lines[this.lineCount];
     let sprites = [];
+    let script = [];
     let stages = [];
     let blockDefs = [];
     let structs = [];
     let comments = [];
     while (this.lineCount < lines.length - 1) {
-      this.lineCount++;
       theLine = lines[this.lineCount].trim();
       if (theLine === "]") {
         break;
@@ -406,6 +411,15 @@ class Parser {
         case Parser.SPRITE:
           sprites.push(this.Sprite(lines));
           break;
+        case Parser.TRIGGERCALL:
+          script.push(this.TriggerCall(lines));
+          break;
+        case Parser.CONTEXTCALL:
+          script.push(this.ContextCall(lines));
+          break;
+        case Parser.BLOCKCALL:
+          script.push(this.BlockCall(lines));
+          break;
         case Parser.STAGE:
           stages.push(this.Stage(lines));
           break;
@@ -413,14 +427,18 @@ class Parser {
           this.unitError(lines, "unrecognized unit child type");
           break;
       }
+      this.lineCount++;
     }
     return {
       type: "Unit",
       name,
+      hue,
       sprites,
       stages,
-      libraries,
+      blockDefs,
+      script,
       comments,
+      metadata,
     };
   }
 
@@ -784,18 +802,15 @@ class Parser {
     };
   }
 
-  isUnit(line) {
-    // OK, this is going to get a bit complex
-    const theLine = line.trim();
-    // We may need lookahead. An empty file is a valid unit. A file with just metadata is a valid unit.
-    // going to punt on this for now.
-    // FIXME
-    return true;
-  }
-
   isMetadata(line) {
     // This is deceptive, because metadata is defined in part by its position
-    return line.split(":").length === 2;
+    if (line.match(/[\(\)\[\]\/\{\}\*\#]/)) return false; // metadata is not allowed to have the symbols ()[]{}/*#
+    let parts = line.split(":");
+    if (parts.length !== 2) return false;
+    let [a, b] = parts;
+    if (a.trim().length < 1) return false;
+    if (b.trim().length < 1) return false;
+    return true;
   }
 
   isLibrary(line) {
@@ -847,14 +862,14 @@ class Parser {
 
   isSounds(line) {
     const theLine = line.trim();
-    if (!theLine.startsWith("sounds ")) return false;
+    if (!theLine.startsWith("sounds")) return false;
     if (!theLine.endsWith("[")) return false;
     return true;
   }
 
   isCostumes(line) {
     const theLine = line.trim();
-    if (!theLine.startsWith("costumes ")) return false;
+    if (!theLine.startsWith("costumes")) return false;
     if (!theLine.endsWith("[")) return false;
     return true;
   }
@@ -873,21 +888,15 @@ class Parser {
 
   isSprite(line) {
     const theLine = line.trim();
-    if (!theLine.startsWith("sprite ")) return false;
-    if (!theLine.endsWith("[")) return false;
-    return true;
-  }
-
-  isLibrary(line) {
-    const theLine = line.trim();
-    if (!theLine.startsWith("library ")) return false;
+    if (!theLine.startsWith("sprite")) return false;
     if (!theLine.endsWith("[")) return false;
     return true;
   }
 
   unitLineType(line) {
-    if (this.isUnit(line)) return Parser.UNIT;
-    if (this.isLibrary(line)) return Parser.LIBRARY;
+    // Unit is the whole file now, not a line type
+    // if (this.isUnit(line)) return Parser.UNIT;
+    if (this.isMetadata(line)) return Parser.METADATA;
     if (this.isWhitespace(line)) return Parser.WHITESPACE;
     if (this.isComment(line)) return Parser.COMMENT;
     if (this.isSprite(line)) return Parser.SPRITE;

@@ -49,29 +49,21 @@ describe("Test the parser parts", function () {
       assert.equal(parser.isComment("//this should be fine too      "), true);
     });
   });
-  // describe("Test isUnit", function () {
-  //   it("Test with minimal whitespace", function () {
-  //     assert.equal(parser.isUnit("unit fnordSuch["), true);
-  //   });
-  //   it("test with some whitespace", function () {
-  //     assert.equal(parser.isUnit("  unit    fnordSuch   [  "), true);
-  //   });
-  //   it("test with internal whitespace", function () {
-  //     assert.equal(parser.isUnit("unit fnord such and such["), true);
-  //   });
-  //   it("test with invalid unit", function () {
-  //     assert.equal(parser.isUnit("unitfnordSuch["), false);
-  //   });
-  //   it("test with invalid unit", function () {
-  //     assert.equal(parser.isUnit("fnordSuch["), false);
-  //   });
-  //   it("test with invalid unit", function () {
-  //     assert.equal(parser.isUnit("unit fnordSuch"), false);
-  //   });
-  // });
   describe("Test Metadata", function () {
     it("test with minimal content", function () {
-      assert.equal(parser.Metadata(["a:b"]).type, "Metadata");
+      assert.equal(parser.Metadata(["a:b"]).a, "b");
+    });
+    it("test with actual metadata", function () {
+      assert.equal(
+        parser.Metadata(["name: Controls", "hue: 90"]).name,
+        "Controls"
+      );
+    });
+    it("test with whitespace lines", function () {
+      assert.equal(
+        parser.Metadata(["", "name: Controls", "     ", "hue: 90"]).hue,
+        "90"
+      );
     });
   });
   describe("Test Comment", function () {
@@ -97,9 +89,13 @@ describe("Test the parser parts", function () {
     // it("Test unit type", function () {
     //   assert.equal(parser.unitLineType("name: fnordSuch"), Parser.UNIT);
     // });
-    it("Test metadata type", function(){
-      assert.equal(parser.unitLineType("a:b"), Parser.METADATA);
-    });
+    // it("Test metadata type", function () {
+    //   assert.equal(parser.unitLineType("a:b"), Parser.METADATA);
+    //   assert.equal(parser.unitLineType("name: Pong"), Parser.METADATA);
+    //   assert.equal(parser.unitLineType("name: Controls"), Parser.METADATA);
+    //   assert.equal(parser.unitLineType("hue: 0"), Parser.METADATA);
+    //   assert.equal(parser.unitLineType("hue: 90"), Parser.METADATA);
+    // });
     it("Test comment type", function () {
       assert.equal(parser.unitLineType("// blah blah"), Parser.COMMENT);
     });
@@ -111,6 +107,9 @@ describe("Test the parser parts", function () {
     });
     it("Test stage type", function () {
       assert.equal(parser.unitLineType("stage["), Parser.STAGE);
+    });
+    it("Test costume type", function () {
+      assert.equal(parser.unitLineType("costumes["), Parser.COSTUMES);
     });
     it("Test block def", function () {
       assert.equal(

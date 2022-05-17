@@ -61,36 +61,27 @@ describe("Sprite Test: test a more full-featured unit", function () {
     ast = parser.parse(testdata);
   });
   describe("parse", function () {
-    it("unit should be found", function () {
-      assert.equal(ast.units.length, 1);
-    });
-    it("unit should not be null or undefined", function () {
-      assert.ok(ast.units[0]);
-    });
     it("unit should have type Unit", function () {
-      assert.equal(ast.units[0].type, "Unit");
+      assert.equal(ast.type, "Unit");
     });
     it("unit should be named Pong", function () {
-      assert.equal(ast.units[0].name, "Pong");
+      assert.equal(ast.name, "Pong");
     });
     it("unit should have a sprites array", function () {
-      assert.ok(ast.units[0].sprites);
+      assert.ok(ast.sprites);
     });
     it("unit should have a stages array", function () {
-      assert.ok(ast.units[0].stages);
-    });
-    it("unit should have a libraries array", function () {
-      assert.ok(ast.units[0].libraries);
+      assert.ok(ast.stages);
     });
     it("unit should have a comments array", function () {
-      assert.ok(ast.units[0].comments);
+      assert.ok(ast.comments);
     });
   });
   describe("sprite", function () {
     let sprite;
     it("there should be one sprite", function () {
-      sprite = ast.units[0].sprites[0];
-      assert.equal(ast.units[0].sprites.length, 1);
+      sprite = ast.sprites[0];
+      assert.equal(ast.sprites.length, 1);
     });
     it("sprite should not be null or undefined", function () {
       assert.ok(sprite);

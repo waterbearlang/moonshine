@@ -33,43 +33,10 @@ describe("Test library unit", function () {
   before(function () {
     ast = parser.parse(testdata);
   });
-  describe("parse", function () {
-    it("unit should be found", function () {
-      assert.equal(ast.units.length, 1);
-    });
-    it("unit should not be null or undefined", function () {
-      assert.ok(ast.units[0]);
-    });
-    it("unit should have type Unit", function () {
-      assert.equal(ast.units[0].type, "Unit");
-    });
-    it("unit should be named Built-ins", function () {
-      assert.equal(ast.units[0].name, "Built-ins");
-    });
-    it("unit should have a libraries array", function () {
-      assert.ok(ast.units[0].libraries);
-    });
-  });
-  describe("library", function () {
-    let library;
-    it("libraries[] should have at least one entry", function () {
-      library = ast.units[0].libraries[0];
-      assert.ok(library);
-    });
-    it("library name should be Controls", function () {
-      assert.equal(library.name, "Controls");
-    });
-    it("library hue should be 0", function () {
-      assert.strictEqual(library.hue, 0);
-    });
-    it("library contains at least 3 blockdefs", function () {
-      assert.ok(library.blockDefs.length >= 3);
-    });
-  });
   describe("blockdef", function () {
     let blockdef;
     it("library should have a (step) blockdef", function () {
-      ast.units[0].libraries[0].blockDefs.forEach(def => {
+      ast.blockDefs.forEach(def => {
         if (def.type === "BlockDef") {
           blockdef = def;
         }
@@ -99,7 +66,7 @@ describe("Test library unit", function () {
   describe("contextdef", function () {
     let contextdef;
     it("library should have a contextdef", function () {
-      ast.units[0].libraries[0].blockDefs.forEach(def => {
+      ast.blockDefs.forEach(def => {
         if (def.type === "ContextDef") {
           contextdef = def;
         }
@@ -137,7 +104,7 @@ describe("Test library unit", function () {
   describe("triggerdef", function () {
     let triggerdef;
     it("library should have a triggerdef", function () {
-      ast.units[0].libraries[0].blockDefs.forEach(def => {
+      ast.blockDefs.forEach(def => {
         if (def.type === "TriggerDef") {
           triggerdef = def;
         }
