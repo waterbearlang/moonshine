@@ -357,7 +357,7 @@ class Parser {
   }
 
   Unit(lines) {
-    // Get name from first line
+    // Get name from metadata
     // Iterate through lines getting Comment, Stage, BlockDef, BlockCall, Sprite, etc.
     let metadata = this.Metadata(lines);
     let name, hue;
